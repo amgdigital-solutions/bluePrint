@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@layer base {
+  body {
+    @apply bg-gray-50 text-gray-900 antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+  .blueprint-grid {
+    background-image: 
+      linear-gradient(rgba(37, 99, 235, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(37, 99, 235, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  .grid-pattern {
+    background-image: 
+      linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-blueprint-600 to-blueprint-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+  }
+  .btn-primary:hover {
+    @apply shadow-lg shadow-blueprint-500/30 -translate-y-0.5;
+  }
+  .glass-card {
+    @apply bg-white/90 backdrop-blur-md border border-white/20;
+  }
+  .section-divider {
+    @apply h-px bg-gradient-to-r from-transparent via-blueprint-200 to-transparent;
+  }
+}
