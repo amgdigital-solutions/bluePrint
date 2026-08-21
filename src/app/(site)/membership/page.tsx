@@ -23,13 +23,12 @@ const benefits = [
 export default function MembershipPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [notice, setNotice] = useState("");
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     setIsLoading(true);
     setSelectedPlan(plan.name);
-    // TODO: Integrate Square checkout here
-    // For now, show a coming soon message
-    alert(`Square checkout integration needed for ${plan.name} plan ($${plan.price}). This will redirect to Square payment.`);
+    setNotice(`${plan.name} membership is ready to activate, but checkout is waiting for the dedicated Blueprints Square account. Your plan price will be $${plan.price}.`);
     setIsLoading(false);
   };
 
@@ -44,6 +43,8 @@ export default function MembershipPage() {
               Join Blueprints Club and unlock exclusive pricing, priority service, and member-only benefits designed for professionals.
             </p>
           </div>
+
+          {notice && <div role="status" className="max-w-3xl mx-auto mb-10 rounded-2xl border border-blueprint-200 bg-blueprint-50 px-5 py-4 text-center text-sm text-blueprint-900">{notice}</div>}
 
           {/* Pricing Cards */}
           <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">

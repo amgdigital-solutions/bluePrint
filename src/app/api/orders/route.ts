@@ -46,6 +46,7 @@ export async function POST(request: Request) {
     const isConstructionSite = body.isConstructionSite === true;
     const deliveryAddress = typeof body.deliveryAddress === "string" ? body.deliveryAddress.trim() : null;
     const distanceMiles = body.distanceMiles == null ? null : Number(body.distanceMiles);
+    const deliveryChoice = body.deliveryChoice === "delivery" ? "delivery" : "pickup";
 
     if (!customerName || !/^\S+@\S+\.\S+$/.test(customerEmail) || !customerPhone) {
       return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
@@ -65,9 +66,12 @@ export async function POST(request: Request) {
 
     const unitPrice = isMember ? prices[printType].member : prices[printType].regular;
     const subtotal = Number((unitPrice * quantity).toFixed(2));
-    const deliveryFee = isConstructionSite ? 15 : 0;
+    if (deliveryChoice === "delivery" && (!isMember || subtotal < 50 || distanceMiles === null || distanceMiles > 10 || !deliveryAddress)) {
+      return NextResponse.json({ error: "Delivery is available to members on $50+ orders within 10 miles. Please choose pickup or call us for special delivery." }, { status: 400 });
+    }
+    const deliveryFee = deliveryChoice === "delivery" && isConstructionSite ? 15 : 0;
     const totalAmount = Number((subtotal + deliveryFee).toFixed(2));
-    const deliveryType = isConstructionSite ? "construction_site" : deliveryAddress ? "delivery" : "pickup";
+    const deliveryType = deliveryChoice === "delivery" ? (isConstructionSite ? "construction_site" : "delivery") : "pickup";
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const fileName = typeof body.fileName === "string" ? body.fileName.trim() : null;
     const fileUrl = typeof body.fileUrl === "string" && body.fileUrl.startsWith("https://") ? body.fileUrl : null;
