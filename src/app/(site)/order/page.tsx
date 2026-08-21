@@ -63,9 +63,14 @@ export default function OrderPage() {
         const dist = calculateDistance(BUSINESS_LAT, BUSINESS_LNG, position.coords.latitude, position.coords.longitude);
         setDistance(parseFloat(dist.toFixed(1)));
       } else {
-        await new Promise((r) => setTimeout(r, 1000));
-        const simulatedDist = Math.random() * 13 + 2;
-        setDistance(parseFloat(simulatedDist.toFixed(1)));
+        const response = await fetch("/api/distance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: formData.address }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Unable to locate that address.");
+        setDistance(result.distance);
       }
     } catch {
       alert("Unable to calculate distance. Please try again.");
