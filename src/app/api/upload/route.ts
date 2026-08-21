@@ -17,6 +17,14 @@ const allowedContentTypes = [
 export async function POST(request: Request) {
   const session = await getSessionFromRequest(request);
   const body = await request.json();
+  const pathname = typeof body.pathname === "string" ? body.pathname : "";
+
+  if (!session && !pathname.startsWith("orders/guest/")) {
+    return NextResponse.json({ error: "Authentication required for file uploads." }, { status: 401 });
+  }
+  if (session && !pathname.startsWith(`orders/${session.userId}/`)) {
+    return NextResponse.json({ error: "Invalid upload path." }, { status: 403 });
+  }
 
   const jsonResponse = await handleUpload({
     body,
