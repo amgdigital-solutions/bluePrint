@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   ShoppingBag,
+  MessageSquareQuote,
   Settings,
   LogOut,
   DraftingCompass,
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/subscribers", label: "Subscribers", icon: Users },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { href: "/admin/quotes", label: "Quotes", icon: MessageSquareQuote },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

@@ -1,27 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User, Mail, Phone, MapPin, Crown, Save, CheckCircle2 } from "lucide-react";
 
 export default function DashboardProfilePage() {
   const [saved, setSaved] = useState(false);
   const [formData, setFormData] = useState({
-    fullName: "John Smith",
-    email: "john@company.com",
-    phone: "+1 (561) 804-9110",
-    company: "Smith Construction",
-    address: "123 Main St, West Palm Beach, FL 33405",
+    fullName: "", email: "", phone: "", company: "", address: "",
   });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  useEffect(() => { fetch("/api/profile").then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error); setFormData({ fullName: result.profile.full_name || "", email: result.profile.email || "", phone: result.profile.phone || "", company: result.profile.company || "", address: result.profile.address || "" }); }).catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load your profile.")).finally(() => setLoading(false)); }, []);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setError("");
+    const response = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
+    const result = await response.json();
+    if (!response.ok) { setError(result.error || "Unable to update your profile."); return; }
+    setSaved(true); setTimeout(() => setSaved(false), 3000);
   };
 
   return (
     <div className="space-y-6">
       <h1 className="font-display text-2xl font-bold text-gray-900">My Profile</h1>
+      {loading && <p className="text-sm text-gray-500">Loading your profile...</p>}
+      {error && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
 
       {/* Membership Card */}
       <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-2xl p-6 text-yellow-900">
