@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Upload, UploadCloud, X, MapPin, Navigation, Send, CheckCircle2, Loader2, Truck, AlertTriangle } from "lucide-react";
@@ -35,7 +36,10 @@ export default function OrderPage() {
   const [calculating, setCalculating] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   const printPrices = { bw: { regular: 2.99, member: 1.99 }, color: { regular: 6.95, member: 5.95 } };
   const unitPrice = formData.isMember ? printPrices[formData.printType].member : printPrices[formData.printType].regular;
@@ -79,12 +83,40 @@ export default function OrderPage() {
     }
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.file) { alert("Please upload your blueprint file"); return; }
     if (!formData.name || !formData.email || !formData.phone) { alert("Please fill in all required fields"); return; }
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 5000);
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: formData.name,
+          customerEmail: formData.email,
+          customerPhone: formData.phone,
+          printType: formData.printType,
+          quantity: formData.quantity,
+          deliveryAddress: formData.address,
+          distanceMiles: distance,
+          isConstructionSite: formData.isConstructionSite,
+          fileName: formData.file.name,
+          notes: formData.notes,
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to submit your order.");
+      setSubmitted(true);
+      if (response.status === 201 && result.order?.user_id) {
+        window.setTimeout(() => router.push("/dashboard/orders"), 1600);
+      }
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : "Unable to submit your order.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -107,6 +139,7 @@ export default function OrderPage() {
           ) : (
             <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
               <div className="p-8 lg:p-10">
+                {submitError && <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{submitError}</div>}
                 {/* File Upload */}
                 <div className="mb-8">
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Upload Your Blueprint *</label>
@@ -260,9 +293,9 @@ export default function OrderPage() {
                   )}
                 </div>
 
-                <button type="submit" className="w-full btn-primary py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2">
-                  <Send className="w-5 h-5" />
-                  Submit Order
+                <button type="submit" disabled={submitting} className="w-full btn-primary py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-60">
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                  {submitting ? "Submitting..." : "Submit Order"}
                 </button>
                 <p className="text-center text-sm text-gray-400 mt-4">We&apos;ll contact you within 30 minutes to confirm your order during business hours.</p>
               </div>

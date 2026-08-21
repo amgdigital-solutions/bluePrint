@@ -95,6 +95,10 @@ CREATE TABLE IF NOT EXISTS order_status_history (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE order_status_history ADD COLUMN IF NOT EXISTS previous_status order_status;
+ALTER TABLE order_status_history ADD COLUMN IF NOT EXISTS new_status order_status;
+ALTER TABLE order_status_history ADD COLUMN IF NOT EXISTS changed_by uuid REFERENCES profiles(id) ON DELETE SET NULL;
+
 CREATE INDEX IF NOT EXISTS order_status_history_order_id_idx ON order_status_history (order_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS subscriptions (
@@ -110,6 +114,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE subscriptions ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+
 CREATE INDEX IF NOT EXISTS subscriptions_user_id_status_idx ON subscriptions (user_id, status);
 
 CREATE TABLE IF NOT EXISTS quote_requests (
@@ -123,6 +129,8 @@ CREATE TABLE IF NOT EXISTS quote_requests (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
 
 CREATE INDEX IF NOT EXISTS quote_requests_status_created_at_idx ON quote_requests (status, created_at DESC);
 

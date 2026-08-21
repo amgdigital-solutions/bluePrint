@@ -1,22 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Users, ShoppingBag, DollarSign, TrendingUp, ArrowRight, Clock } from "lucide-react";
-
-const stats = [
-  { label: "Total Subscribers", value: "156", change: "+12 this month", icon: Users, color: "bg-blue-50 text-blue-600" },
-  { label: "Total Orders", value: "1,247", change: "+89 this month", icon: ShoppingBag, color: "bg-purple-50 text-purple-600" },
-  { label: "Revenue", value: "$8,420", change: "+15% vs last month", icon: DollarSign, color: "bg-green-50 text-green-600" },
-  { label: "Pending Orders", value: "23", change: "5 rush orders", icon: Clock, color: "bg-yellow-50 text-yellow-600" },
-];
-
-const recentOrders = [
-  { id: "ORD-1247", customer: "Marcus Johnson", date: "2026-08-21", status: "printing", total: 59.80 },
-  { id: "ORD-1246", customer: "Sarah Chen", date: "2026-08-21", status: "pending", total: 119.00 },
-  { id: "ORD-1245", customer: "David Rodriguez", date: "2026-08-20", status: "ready", total: 29.90 },
-  { id: "ORD-1244", customer: "Jennifer Walsh", date: "2026-08-20", status: "delivered", total: 178.50 },
-  { id: "ORD-1243", customer: "Michael Torres", date: "2026-08-19", status: "printing", total: 89.70 },
-];
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -27,6 +13,25 @@ const statusColors: Record<string, string> = {
 };
 
 export default function AdminOverviewPage() {
+  const [summary, setSummary] = useState<{ stats?: any; recentOrders?: any[] }>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/admin/summary")
+      .then((response) => response.json())
+      .then((result) => setSummary(result))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const stats = [
+    { label: "Total Subscribers", value: summary.stats?.subscribers ?? "—", change: "Live from Neon", icon: Users, color: "bg-blue-50 text-blue-600" },
+    { label: "Total Orders", value: summary.stats?.orders ?? "—", change: "Live from Neon", icon: ShoppingBag, color: "bg-purple-50 text-purple-600" },
+    { label: "Revenue", value: summary.stats ? `$${Number(summary.stats.revenue).toFixed(2)}` : "—", change: "Excludes cancelled orders", icon: DollarSign, color: "bg-green-50 text-green-600" },
+    { label: "Active Orders", value: summary.stats?.pending_orders ?? "—", change: "Pending through ready", icon: Clock, color: "bg-yellow-50 text-yellow-600" },
+  ];
+
+  const recentOrders = summary.recentOrders || [];
+
   return (
     <div className="space-y-8">
       <div>
@@ -71,19 +76,21 @@ export default function AdminOverviewPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {recentOrders.map((order) => (
+              {!loading && recentOrders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-medium text-gray-900">{order.id}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.customer}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{order.date}</td>
+                  <td className="px-6 py-4 font-medium text-gray-900">{order.order_number}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{order.customer_name}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[order.status]}`}>
                       {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right font-semibold text-gray-900">${order.total.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-right font-semibold text-gray-900">${Number(order.total_amount).toFixed(2)}</td>
                 </tr>
               ))}
+              {!loading && recentOrders.length === 0 && <tr><td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-500">No orders yet.</td></tr>}
+              {loading && <tr><td colSpan={5} className="px-6 py-10 text-center text-sm text-gray-500">Loading live data...</td></tr>}
             </tbody>
           </table>
         </div>

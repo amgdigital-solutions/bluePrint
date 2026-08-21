@@ -1,14 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ShoppingBag, Clock, CheckCircle2, Truck, ArrowRight, Upload } from "lucide-react";
-
-// Mock data - replace with real API calls
-const recentOrders = [
-  { id: "ORD-001", date: "2026-08-20", status: "delivered", total: 59.80, items: "10× B&W Blueprints", printType: "bw" },
-  { id: "ORD-002", date: "2026-08-18", status: "printing", total: 119.00, items: "20× Color Blueprints", printType: "color" },
-  { id: "ORD-003", date: "2026-08-15", status: "ready", total: 29.90, items: "5× B&W Blueprints", printType: "bw" },
-];
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700", icon: Clock },
@@ -19,21 +13,36 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 };
 
 export default function DashboardHome() {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/orders")
+      .then((response) => response.json())
+      .then((result) => setOrders(result.orders || []))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const activeStatuses = new Set(["pending", "processing", "printing", "ready"]);
+  const activeOrders = orders.filter((order) => activeStatuses.has(order.status));
+  const totalSpent = orders.reduce((sum, order) => sum + Number(order.total_amount || 0), 0);
+  const recentOrders = orders.slice(0, 3);
+
   return (
     <div className="space-y-8">
       {/* Stats */}
       <div className="grid sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Total Orders</p>
-          <p className="font-display text-3xl font-bold text-gray-900">12</p>
+          <p className="font-display text-3xl font-bold text-gray-900">{loading ? "—" : orders.length}</p>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Active Orders</p>
-          <p className="font-display text-3xl font-bold text-blueprint-700">2</p>
+          <p className="font-display text-3xl font-bold text-blueprint-700">{loading ? "—" : activeOrders.length}</p>
         </div>
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
           <p className="text-sm text-gray-500 mb-1">Total Spent</p>
-          <p className="font-display text-3xl font-bold text-gray-900">$847.50</p>
+          <p className="font-display text-3xl font-bold text-gray-900">{loading ? "—" : `$${totalSpent.toFixed(2)}`}</p>
         </div>
       </div>
 
@@ -57,9 +66,10 @@ export default function DashboardHome() {
           </Link>
         </div>
         <div className="divide-y divide-gray-100">
-          {recentOrders.map((order) => {
+          {!loading && recentOrders.map((order) => {
             const status = statusConfig[order.status];
             const StatusIcon = status.icon;
+            const itemLabel = `${order.quantity}× ${order.print_type === "bw" ? "B&W" : "Color"} Blueprints`;
             return (
               <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-4">
@@ -67,12 +77,12 @@ export default function DashboardHome() {
                     <StatusIcon className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{order.id}</p>
-                    <p className="text-sm text-gray-500">{order.items} • {order.date}</p>
+                    <p className="font-semibold text-gray-900">{order.order_number}</p>
+                    <p className="text-sm text-gray-500">{itemLabel} • {new Date(order.created_at).toLocaleDateString()}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-gray-900">${order.total.toFixed(2)}</p>
+                  <p className="font-semibold text-gray-900">${Number(order.total_amount).toFixed(2)}</p>
                   <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${status.color}`}>
                     {status.label}
                   </span>
@@ -80,6 +90,8 @@ export default function DashboardHome() {
               </div>
             );
           })}
+          {!loading && recentOrders.length === 0 && <p className="px-6 py-10 text-center text-sm text-gray-500">Your recent orders will appear here.</p>}
+          {loading && <p className="px-6 py-10 text-center text-sm text-gray-500">Loading your orders...</p>}
         </div>
       </div>
 

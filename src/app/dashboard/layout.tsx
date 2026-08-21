@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -23,6 +24,21 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [memberName, setMemberName] = useState("Member");
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((result) => result.user?.name && setMemberName(result.user.name))
+      .catch(() => undefined);
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -37,11 +53,11 @@ export default function DashboardLayout({
               <span className="font-display font-bold text-lg text-gray-900">Blueprints Club</span>
             </Link>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-500 hidden sm:inline">Welcome, Member</span>
-              <Link href="/" className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+              <span className="text-sm text-gray-500 hidden sm:inline">Welcome, {memberName}</span>
+              <button onClick={handleLogout} className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
                 <LogOut className="w-4 h-4" />
                 <span className="hidden sm:inline">Sign Out</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>

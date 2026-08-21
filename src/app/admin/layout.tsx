@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -26,6 +27,21 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [adminName, setAdminName] = useState("Admin");
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then((result) => result.user?.name && setAdminName(result.user.name))
+      .catch(() => undefined);
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -43,12 +59,12 @@ export default function AdminLayout({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-sm text-blueprint-200">
                 <Shield className="w-4 h-4" />
-                <span className="hidden sm:inline">Admin Access</span>
+                <span className="hidden sm:inline">{adminName}</span>
               </div>
-              <Link href="/" className="text-sm text-blueprint-300 hover:text-white flex items-center gap-1 transition-colors">
+              <button onClick={handleLogout} className="text-sm text-blueprint-300 hover:text-white flex items-center gap-1 transition-colors">
                 <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Exit Admin</span>
-              </Link>
+                <span className="hidden sm:inline">Sign Out</span>
+              </button>
             </div>
           </div>
         </div>

@@ -52,6 +52,11 @@ export async function verifySessionToken(token?: string | null): Promise<Session
   }
 }
 
+export async function getSessionFromRequest(request: Request) {
+  const token = request.headers.get("cookie")?.match(new RegExp(`${AUTH_COOKIE}=([^;]+)`))?.[1];
+  return verifySessionToken(token);
+}
+
 export const sessionCookieOptions = (rememberMe = true) => ({
   httpOnly: true,
   sameSite: "lax" as const,
