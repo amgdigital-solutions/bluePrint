@@ -54,6 +54,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Keep this migration compatible with the original prototype profiles table.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS password_hash text;
+
 CREATE UNIQUE INDEX IF NOT EXISTS profiles_email_lower_idx ON profiles (lower(email));
 
 CREATE TABLE IF NOT EXISTS orders (

@@ -2,23 +2,35 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, LogIn, DraftingCompass } from "lucide-react";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
-    // TODO: Integrate with auth API
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...formData, rememberMe }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to sign in.");
+      router.push(result.user.role === "admin" ? "/admin" : "/dashboard");
+      router.refresh();
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to sign in.");
       setIsLoading(false);
-      setError("Authentication not yet connected. Please set up Supabase/Neon auth.");
-    }, 1000);
+    }
   };
 
   return (
@@ -71,7 +83,7 @@ export default function LoginPage() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blueprint-600" />
+                <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 rounded border-gray-300 text-blueprint-600" />
                 <span className="text-gray-600">Remember me</span>
               </label>
               <Link href="/forgot-password" className="text-blueprint-600 hover:text-blueprint-800 font-medium">

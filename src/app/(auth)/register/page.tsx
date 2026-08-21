@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, UserPlus, DraftingCompass, CheckCircle2 } from "lucide-react";
 
 export default function RegisterPage() {
@@ -10,6 +11,7 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,11 +21,21 @@ export default function RegisterPage() {
       return;
     }
     setIsLoading(true);
-    // TODO: Integrate with auth API
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to create your account.");
       setSuccess(true);
-    }, 1500);
+      window.setTimeout(() => router.push("/dashboard"), 800);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to create your account.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (success) {

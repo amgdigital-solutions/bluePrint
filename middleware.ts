@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { AUTH_COOKIE, verifySessionToken } from "@/lib/auth";
 
-export function middleware(request: NextRequest) {
-  const token = request.cookies.get("auth-token")?.value;
-  const isAdmin = request.cookies.get("user-role")?.value === "admin";
+export async function middleware(request: NextRequest) {
+  const session = await verifySessionToken(request.cookies.get(AUTH_COOKIE)?.value);
+  const isAuthenticated = Boolean(session);
 
-  if (request.nextUrl.pathname.startsWith("/dashboard") && !token) {
+  if (request.nextUrl.pathname.startsWith("/dashboard") && !isAuthenticated) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  if (request.nextUrl.pathname.startsWith("/admin") && !isAdmin) {
+  if (request.nextUrl.pathname.startsWith("/admin") && session?.role !== "admin") {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (token && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
+  if (isAuthenticated && (request.nextUrl.pathname === "/login" || request.nextUrl.pathname === "/register")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
