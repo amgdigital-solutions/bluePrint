@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { DraftingCompass, MapPin, Phone, Mail, Clock } from "lucide-react";
+import Image from "next/image";
+import { MapPin, Phone, Mail, Clock } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -7,15 +8,13 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           <div className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-blueprint-600 rounded-lg flex items-center justify-center">
-                <DraftingCompass className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="font-display font-bold text-xl">Blueprints Club</h3>
-                <p className="text-xs text-blueprint-400 -mt-1">Professional Printing</p>
-              </div>
-            </div>
+            <Image
+              src="/blueprints-club-logo.png"
+              alt="Blueprints Club"
+              width={1280}
+              height={320}
+              className="h-16 w-auto max-w-[260px] rounded bg-white object-contain mb-4"
+            />
             <p className="text-blueprint-300 text-sm leading-relaxed max-w-sm">
               Your trusted partner for professional blueprint printing in West Palm Beach. 
               Serving architects, engineers, and construction professionals with quality, speed, and reliability.

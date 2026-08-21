@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, DraftingCompass, Crown, User } from "lucide-react";
+import Image from "next/image";
+import { Menu, X, Crown, User } from "lucide-react";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -30,13 +31,14 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 lg:h-20">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-blueprint-600 to-blueprint-800 rounded-lg flex items-center justify-center">
-              <DraftingCompass className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h1 className="font-display font-bold text-xl text-blueprint-900">Blueprints Club</h1>
-              <p className="text-[10px] text-blueprint-600 -mt-1 tracking-wider uppercase">Professional Printing</p>
-            </div>
+            <Image
+              src="/blueprints-club-logo.png"
+              alt="Blueprints Club"
+              width={1280}
+              height={320}
+              priority
+              className="h-11 w-auto max-w-[205px] object-contain"
+            />
           </Link>
 
           <div className="hidden lg:flex items-center gap-1">
