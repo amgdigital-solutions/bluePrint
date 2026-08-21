@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSessionFromRequest } from "@/lib/auth";
+import { createSessionToken, getSessionFromRequest, sessionCookieOptions, AUTH_COOKIE } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -28,7 +28,10 @@ export async function PATCH(request: Request) {
     const conflict = await sql`SELECT id FROM profiles WHERE lower(email) = ${email} AND id <> ${session.userId} LIMIT 1`;
     if (conflict.length) return NextResponse.json({ error: "That email is already in use." }, { status: 409 });
     const rows = await sql`UPDATE profiles SET full_name = ${fullName}, email = ${email}, phone = ${phone}, company = ${company}, address = ${address} WHERE id = ${session.userId} RETURNING id, email, full_name, phone, company, address, is_member, membership_tier, membership_expires_at`;
-    return NextResponse.json({ profile: rows[0] });
+    const response = NextResponse.json({ profile: rows[0] });
+    const token = await createSessionToken({ userId: session.userId, email, name: fullName, role: session.role });
+    response.cookies.set(AUTH_COOKIE, token, sessionCookieOptions());
+    return response;
   } catch (error) {
     console.error("Profile update failed", error);
     return NextResponse.json({ error: "Unable to update your profile." }, { status: 500 });
