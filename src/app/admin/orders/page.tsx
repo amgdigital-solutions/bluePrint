@@ -103,6 +103,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">{order.order_number}</p>
                       <p className="text-xs text-gray-500">{itemLabel}</p>
+                      {order.file_url && <a href={`/api/orders/${order.id}/file`} className="text-xs text-blueprint-600 hover:text-blueprint-800">Download file</a>}
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">{customer}</p>

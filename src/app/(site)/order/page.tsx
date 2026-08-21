@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Upload, UploadCloud, X, MapPin, Navigation, Send, CheckCircle2, Loader2, Truck, AlertTriangle } from "lucide-react";
@@ -90,6 +91,17 @@ export default function OrderPage() {
     setSubmitting(true);
     setSubmitError("");
     try {
+      const meResponse = await fetch("/api/auth/me");
+      const meResult = meResponse.ok ? await meResponse.json() : { user: null };
+      const safeFileName = formData.file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const uploadPath = meResult.user
+        ? `orders/${meResult.user.id}/${crypto.randomUUID()}-${safeFileName}`
+        : `orders/guest/${crypto.randomUUID()}-${safeFileName}`;
+      const blob = await upload(uploadPath, formData.file, {
+        access: "private",
+        handleUploadUrl: "/api/upload",
+      });
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,6 +115,7 @@ export default function OrderPage() {
           distanceMiles: distance,
           isConstructionSite: formData.isConstructionSite,
           fileName: formData.file.name,
+          fileUrl: blob.url,
           notes: formData.notes,
         }),
       });

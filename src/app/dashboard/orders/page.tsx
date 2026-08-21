@@ -96,6 +96,7 @@ export default function DashboardOrdersPage() {
                       <div>
                         <p className="font-semibold text-gray-900">{order.order_number}</p>
                         <p className="text-sm text-gray-500">{itemLabel}</p>
+                        {order.file_url && <a href={`/api/orders/${order.id}/file`} className="text-xs text-blueprint-600 hover:text-blueprint-800">Download blueprint</a>}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>

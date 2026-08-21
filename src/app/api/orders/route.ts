@@ -70,6 +70,7 @@ export async function POST(request: Request) {
     const deliveryType = isConstructionSite ? "construction_site" : deliveryAddress ? "delivery" : "pickup";
     const orderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const fileName = typeof body.fileName === "string" ? body.fileName.trim() : null;
+    const fileUrl = typeof body.fileUrl === "string" && body.fileUrl.startsWith("https://") ? body.fileUrl : null;
     const notes = typeof body.notes === "string" ? body.notes.trim() : null;
 
     const rows = await sql`
@@ -77,12 +78,12 @@ export async function POST(request: Request) {
         order_number, user_id, customer_name, customer_email, customer_phone,
         print_type, quantity, unit_price, total_amount, delivery_fee,
         delivery_type, delivery_address, distance_miles, is_construction_site,
-        file_name, notes
+        file_url, file_name, notes
       ) VALUES (
         ${orderNumber}, ${session?.userId || null}, ${customerName}, ${customerEmail}, ${customerPhone},
         ${printType}, ${quantity}, ${unitPrice}, ${totalAmount}, ${deliveryFee},
         ${deliveryType}, ${deliveryAddress}, ${distanceMiles}, ${isConstructionSite},
-        ${fileName}, ${notes}
+        ${fileUrl}, ${fileName}, ${notes}
       )
       RETURNING *
     `;
