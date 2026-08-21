@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Filter, Crown, Calendar, Mail, Phone, ChevronDown } from "lucide-react";
+import { Search, Filter, Crown, Calendar, Mail, Phone, ChevronDown, Users } from "lucide-react";
 
 const subscribers = [
   { id: "USR-001", name: "Marcus Johnson", email: "marcus@apex.com", phone: "+1 561-111-2222", tier: "Monthly", status: "active", joined: "2026-01-15", expires: "2026-09-15", orders: 45 },

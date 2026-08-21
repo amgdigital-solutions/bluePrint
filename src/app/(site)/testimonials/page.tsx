@@ -20,7 +20,7 @@ export default function TestimonialsPage() {
           <div className="text-center mb-16">
             <h1 className="font-display text-5xl font-bold text-gray-900 mb-6">Member Stories</h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Don't just take our word for it. Here's what professionals across South Florida say about Blueprints Club.
+              Don&apos;t just take our word for it. Here&apos;s what professionals across South Florida say about Blueprints Club.
             </p>
           </div>
 

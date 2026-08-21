@@ -11,7 +11,7 @@ export default function AboutPage() {
           <div className="text-center mb-16">
             <h1 className="font-display text-5xl font-bold text-gray-900 mb-6">About Blueprints Club</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              We are West Palm Beach's premier blueprint printing service, built by professionals for professionals. 
+              We are West Palm Beach&apos;s premier blueprint printing service, built by professionals for professionals. 
               Our mission is simple: deliver high-quality prints fast, at prices that make sense.
             </p>
           </div>
@@ -21,13 +21,13 @@ export default function AboutPage() {
               <div className="bg-white rounded-xl p-8 shadow-sm">
                 <h3 className="font-display text-2xl font-bold text-gray-900 mb-4">Our Story</h3>
                 <p className="text-gray-600 leading-relaxed mb-4">
-                  Founded in 2024, Blueprints Club was born from a simple frustration — print shops that didn't understand 
+                  Founded in 2024, Blueprints Club was born from a simple frustration — print shops that didn&apos;t understand 
                   the urgency and precision required in construction and architecture.
                 </p>
                 <p className="text-gray-600 leading-relaxed">
                   Today, we serve hundreds of professionals across South Florida with same-day printing, 
-                  member-exclusive pricing, and delivery straight to job sites. We're not just a print shop — 
-                  we're your project's behind-the-scenes partner.
+                  member-exclusive pricing, and delivery straight to job sites. We&apos;re not just a print shop — 
+                  we&apos;re your project&apos;s behind-the-scenes partner.
                 </p>
               </div>
             </div>

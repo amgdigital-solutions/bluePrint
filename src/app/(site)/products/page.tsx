@@ -108,7 +108,7 @@ export default function ProductsPage() {
                 <div className="text-center py-8">
                   <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
                   <h4 className="font-semibold text-gray-900 text-lg mb-1">Quote Request Sent!</h4>
-                  <p className="text-gray-500">We'll get back to you within 24 hours.</p>
+                  <p className="text-gray-500">We&apos;ll get back to you within 24 hours.</p>
                 </div>
               ) : (
                 <form onSubmit={handleQuoteSubmit} className="space-y-4">
