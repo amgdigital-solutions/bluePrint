@@ -9,6 +9,12 @@
     @apply bg-gray-50 text-gray-900 antialiased;
     font-family: 'Inter', sans-serif;
   }
+  ::selection {
+    @apply bg-blueprint-600 text-white;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-blueprint-500 ring-offset-2;
+  }
 }
 
 @layer utilities {
@@ -28,7 +34,19 @@
     background-size: 40px 40px;
   }
   .btn-primary {
-    @apply bg-gradient-to-r from-blueprint-600 to-blueprint-700 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+    @apply bg-gradient-to-r from-blueprint-600 to-blueprint-700 text-white font-semibold px-6 py-3 rounded-xl shadow-md shadow-blueprint-700/15 transition-all duration-300;
+  }
+  .btn-secondary {
+    @apply bg-white border border-gray-200 text-gray-700 font-semibold px-6 py-3 rounded-xl transition-all duration-300;
+  }
+  .btn-secondary:hover {
+    @apply border-blueprint-300 text-blueprint-700 shadow-md -translate-y-0.5;
+  }
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:border-blueprint-200 hover:shadow-xl hover:shadow-blueprint-900/5;
+  }
+  .eyebrow {
+    @apply text-xs font-bold uppercase tracking-[0.2em] text-blueprint-600;
   }
   .btn-primary:hover {
     @apply shadow-lg shadow-blueprint-500/30 -translate-y-0.5;

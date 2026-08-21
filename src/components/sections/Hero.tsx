@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Upload, Crown, CheckCircle2, ArrowRight } from "lucide-react";
+import { Upload, Crown, ArrowRight } from "lucide-react";
 
 export default function Hero() {
   return (
@@ -13,11 +13,12 @@ export default function Hero() {
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div>
-            <div className="inline-flex items-center gap-2 bg-blueprint-50 border border-blueprint-200 rounded-full px-4 py-1.5 mb-6">
+            <div className="inline-flex items-center gap-2 bg-white/80 border border-blueprint-200 rounded-full px-4 py-1.5 mb-6 shadow-sm">
               <span className="w-2 h-2 bg-blueprint-500 rounded-full animate-pulse" />
               <span className="text-sm font-medium text-blueprint-700">Now Serving West Palm Beach</span>
             </div>
-            <h1 className="font-display text-5xl lg:text-7xl font-bold text-gray-900 leading-tight mb-6">
+            <p className="eyebrow mb-3">Precision printing for the built environment</p>
+            <h1 className="font-display text-5xl lg:text-7xl font-bold text-gray-900 leading-[1.05] mb-6 tracking-tight">
               Professional{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blueprint-600 to-blueprint-800">
                 Blueprint
@@ -38,18 +39,15 @@ export default function Hero() {
                 View Membership
               </Link>
             </div>
-            <div className="mt-10 flex items-center gap-6 text-sm text-gray-500">
+            <div className="mt-10 grid grid-cols-3 gap-5 max-w-xl border-t border-gray-200 pt-6">
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>24hr Turnaround</span>
+                <div><p className="font-display text-xl font-bold text-gray-900">24h</p><p className="text-xs text-gray-500">Turnaround</p></div>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Members Save 33%</span>
+                <div><p className="font-display text-xl font-bold text-gray-900">33%</p><p className="text-xs text-gray-500">Member savings</p></div>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-green-500" />
-                <span>Free Delivery $50+</span>
+                <div><p className="font-display text-xl font-bold text-gray-900">10 mi</p><p className="text-xs text-gray-500">Free delivery</p></div>
               </div>
             </div>
           </div>

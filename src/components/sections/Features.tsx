@@ -58,7 +58,8 @@ export default function Features() {
     <section className="py-24 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="font-display text-4xl font-bold text-gray-900 mb-4">What We Offer</h2>
+          <p className="eyebrow mb-3">Built for your next deadline</p>
+          <h2 className="font-display text-4xl font-bold text-gray-900 mb-4 tracking-tight">Everything your plans need</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Everything you need for professional blueprint printing, from standard B&W copies to full-color plans and digitizing services.
           </p>
@@ -67,7 +68,7 @@ export default function Features() {
           {features.map((feature, idx) => (
             <div
               key={idx}
-              className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-blueprint-200 hover:shadow-lg transition-all duration-300 group"
+              className="bg-white rounded-2xl p-6 border border-gray-100 card-hover group"
             >
               <div className="w-12 h-12 bg-blueprint-50 rounded-xl flex items-center justify-center mb-4 group-hover:bg-blueprint-100 transition-colors">
                 <feature.icon className="w-6 h-6 text-blueprint-600" />
