@@ -1,12 +1,10 @@
-// Database connection using Neon
-// Install: npm install @neondatabase/serverless drizzle-orm
-// Then uncomment below:
+import { neon } from "@neondatabase/serverless";
 
-// import { Pool } from "@neondatabase/serverless";
-// import { drizzle } from "drizzle-orm/neon-serverless";
-// 
-// const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-// export const db = drizzle(pool);
+const databaseUrl = process.env.DATABASE_URL;
 
-// Placeholder until Neon is connected
-export const db = null;
+if (!databaseUrl && process.env.NODE_ENV === "production") {
+  throw new Error("DATABASE_URL is required in production.");
+}
+
+/** Server-only Neon SQL client. Never import this module into client components. */
+export const sql = databaseUrl ? neon(databaseUrl) : null;
