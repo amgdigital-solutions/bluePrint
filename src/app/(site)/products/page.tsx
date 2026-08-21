@@ -39,16 +39,33 @@ const products = [
 export default function ProductsPage() {
   const [quoteModal, setQuoteModal] = useState<{ open: boolean; product: string }>({ open: false, product: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({ name: "", email: "", phone: "", details: "" });
 
-  const handleQuoteSubmit = (e: React.FormEvent) => {
+  const handleQuoteSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setQuoteModal({ open: false, product: "" });
-      setFormData({ name: "", email: "", phone: "", details: "" });
-    }, 3000);
+    setSubmitting(true);
+    setError("");
+    try {
+      const response = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ productName: quoteModal.product, customerName: formData.name, customerEmail: formData.email, customerPhone: formData.phone, details: formData.details }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to submit your request.");
+      setSubmitted(true);
+      setTimeout(() => {
+        setSubmitted(false);
+        setQuoteModal({ open: false, product: "" });
+        setFormData({ name: "", email: "", phone: "", details: "" });
+      }, 2500);
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to submit your request.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -132,9 +149,10 @@ export default function ProductsPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">Project Details</label>
                     <textarea rows={3} value={formData.details} onChange={(e) => setFormData({ ...formData, details: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blueprint-500 transition-colors resize-none" placeholder="Quantity, size, timeline, special requirements..." />
                   </div>
-                  <button type="submit" className="w-full btn-primary flex items-center justify-center gap-2 py-3">
+                  {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+                  <button type="submit" disabled={submitting} className="w-full btn-primary flex items-center justify-center gap-2 py-3 disabled:opacity-60">
                     <Send className="w-4 h-4" />
-                    Send Quote Request
+                    {submitting ? "Sending..." : "Send Quote Request"}
                   </button>
                 </form>
               )}
