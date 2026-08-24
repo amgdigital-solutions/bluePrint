@@ -1,16 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Filter, Crown, Calendar, Mail, Phone, ChevronDown, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Search, Crown, Users, Loader2 } from "lucide-react";
 
-const subscribers = [
-  { id: "USR-001", name: "Marcus Johnson", email: "marcus@apex.com", phone: "+1 561-111-2222", tier: "Monthly", status: "active", joined: "2026-01-15", expires: "2026-09-15", orders: 45 },
-  { id: "USR-002", name: "Sarah Chen", email: "sarah@chen.design", phone: "+1 561-222-3333", tier: "6 Months", status: "active", joined: "2026-03-10", expires: "2026-09-10", orders: 28 },
-  { id: "USR-003", name: "David Rodriguez", email: "david@buildright.com", phone: "+1 561-333-4444", tier: "Yearly", status: "active", joined: "2026-02-01", expires: "2027-02-01", orders: 67 },
-  { id: "USR-004", name: "Jennifer Walsh", email: "jen@walsh.com", phone: "+1 561-444-5555", tier: "Monthly", status: "cancelled", joined: "2026-05-20", expires: "2026-06-20", orders: 12 },
-  { id: "USR-005", name: "Michael Torres", email: "mike@torres.com", phone: "+1 561-555-6666", tier: "6 Months", status: "active", joined: "2026-04-15", expires: "2026-10-15", orders: 34 },
-  { id: "USR-006", name: "Amanda Foster", email: "amanda@foster.com", phone: "+1 561-666-7777", tier: "Monthly", status: "past_due", joined: "2026-06-01", expires: "2026-07-01", orders: 8 },
-];
+type Subscriber = { id: string; full_name: string; email: string; phone?: string; membership_tier: "monthly" | "6month" | "yearly" | null; status: string; membership_expires_at: string | null; orders: number };
 
 const tierColors: Record<string, string> = {
   Monthly: "bg-blue-100 text-blue-700",
@@ -28,10 +21,18 @@ export default function AdminSubscribersPage() {
   const [search, setSearch] = useState("");
   const [tierFilter, setTierFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    fetch("/api/admin/subscribers").then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error); setSubscribers(result.subscribers); }).catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load subscribers.")).finally(() => setLoading(false));
+  }, []);
 
   const filtered = subscribers.filter((s) => {
-    const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
-    const matchesTier = tierFilter === "all" || s.tier === tierFilter;
+    const matchesSearch = s.full_name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
+    const tier = s.membership_tier === "6month" ? "6 Months" : s.membership_tier === "yearly" ? "Yearly" : "Monthly";
+    const matchesTier = tierFilter === "all" || tier === tierFilter;
     const matchesStatus = statusFilter === "all" || s.status === statusFilter;
     return matchesSearch && matchesTier && matchesStatus;
   });
@@ -76,23 +77,25 @@ export default function AdminSubscribersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {filtered.map((sub) => (
+              {filtered.map((sub) => {
+                const tier = sub.membership_tier === "6month" ? "6 Months" : sub.membership_tier === "yearly" ? "Yearly" : "Monthly";
+                return (
                 <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-blueprint-100 rounded-full flex items-center justify-center font-bold text-blueprint-700 text-sm">
-                        {sub.name.split(" ").map((n) => n[0]).join("")}
+                        {sub.full_name.split(" ").map((n) => n[0]).join("")}
                       </div>
                       <div>
-                        <p className="font-semibold text-gray-900">{sub.name}</p>
+                        <p className="font-semibold text-gray-900">{sub.full_name}</p>
                         <p className="text-xs text-gray-500">{sub.email}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${tierColors[sub.tier]}`}>
+                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${tierColors[tier]}`}>
                       <Crown className="w-3 h-3" />
-                      {sub.tier}
+                      {tier}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -100,14 +103,16 @@ export default function AdminSubscribersPage() {
                       {sub.status.charAt(0).toUpperCase() + sub.status.slice(1)}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{sub.expires}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{sub.membership_expires_at ? new Date(sub.membership_expires_at).toLocaleDateString() : "—"}</td>
                   <td className="px-6 py-4 text-right font-semibold text-gray-900">{sub.orders}</td>
                 </tr>
-              ))}
+              ); })}
             </tbody>
           </table>
         </div>
-        {filtered.length === 0 && (
+        {loading && <div className="text-center py-12 text-gray-500"><Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin" />Loading live subscribers...</div>}
+        {error && <div className="text-center py-12 text-red-600">{error}</div>}
+        {!loading && !error && filtered.length === 0 && (
           <div className="text-center py-12 text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
             <p>No subscribers found matching your criteria.</p>
