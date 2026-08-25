@@ -15,7 +15,7 @@ const plans = [
 const benefits = [
   { icon: Zap, title: "Rush Prints", desc: "Expedite/priority printing on call. Skip the queue when you need it fast." },
   { icon: Shield, title: "Digitizing", desc: "Hard copy to soft copy conversion for just $1.99 per document." },
-  { icon: Clock, title: "24hr Submissions", desc: "Submit orders anytime. We process all member orders within 24 business hours." },
+  { icon: Clock, title: "Flexible timing", desc: "Submit orders anytime. We confirm timing based on workload, file readiness, and order complexity." },
   { icon: Printer, title: "No Maximum Prints", desc: "Order as many as you need. No caps on quantity for large projects." },
   { icon: Truck, title: "Member Delivery", desc: "Free delivery within 10 miles on eligible $50+ orders. A different delivery address adds $15." },
   { icon: Crown, title: "Member Pricing", desc: "Save 33% on every blueprint. B&W $1.99 (reg $2.99), Color $5.95 (reg $6.95)." },
@@ -26,12 +26,29 @@ export default function MembershipPage() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState("");
+  const [addressDistance, setAddressDistance] = useState<number | null>(null);
+  const [addressChecking, setAddressChecking] = useState(false);
   const [memberForm, setMemberForm] = useState({ fullName: "", phone: "", company: "", address: "" });
   const [profileEmail, setProfileEmail] = useState("");
 
   useEffect(() => {
     fetch("/api/profile").then(async (response) => { if (!response.ok) return; const result = await response.json(); setProfileEmail(result.profile.email || ""); setMemberForm({ fullName: result.profile.full_name || "", phone: result.profile.phone || "", company: result.profile.company || "", address: result.profile.address || "" }); }).catch(() => undefined);
   }, []);
+
+  const validateMemberAddress = async () => {
+    if (!memberForm.address.trim()) { setNotice("Please enter your delivery address first."); return false; }
+    setAddressChecking(true); setNotice("");
+    try {
+      const response = await fetch("/api/distance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address: memberForm.address }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to validate that address.");
+      setAddressDistance(result.distance);
+      if (result.distance > 10) { setNotice(`This address is ${result.distance} miles away. Membership delivery addresses must be within 10 miles of our store.`); return false; }
+      setNotice(`Address verified — ${result.distance} miles from our store. You are within the 10-mile membership delivery area.`);
+      return true;
+    } catch (reason) { setAddressDistance(null); setNotice(reason instanceof Error ? reason.message : "Unable to validate that address."); return false; }
+    finally { setAddressChecking(false); }
+  };
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     if (!profileEmail) {
@@ -40,6 +57,10 @@ export default function MembershipPage() {
     }
     setIsLoading(true);
     setSelectedPlan(plan.name);
+    if (addressDistance === null || addressDistance > 10) {
+      const addressIsEligible = await validateMemberAddress();
+      if (!addressIsEligible) { setIsLoading(false); return; }
+    }
     if (!memberForm.fullName || !memberForm.address) {
       setNotice("Please complete your name and saved delivery address before continuing.");
       setIsLoading(false);
@@ -133,15 +154,12 @@ export default function MembershipPage() {
           <section className="max-w-3xl mx-auto mb-20 rounded-3xl bg-slate-50 border border-gray-200 p-7 sm:p-9">
             <div className="flex items-start gap-4 mb-6">
               <div className="w-11 h-11 rounded-xl bg-blueprint-100 flex items-center justify-center flex-shrink-0"><UserRound className="w-5 h-5 text-blueprint-700" /></div>
-              <div><h2 className="font-display text-2xl font-bold text-gray-900">Membership details</h2><p className="text-sm text-gray-500 mt-1">Save your usual delivery address. It will be used as your default member address at checkout.</p></div>
+              <div><h2 className="font-display text-2xl font-bold text-gray-900">Membership delivery address</h2><p className="text-sm text-gray-500 mt-1">We verify this address before membership starts. It must be within 10 miles of our West Palm Beach store.</p></div>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <input required placeholder="Full name" value={memberForm.fullName} onChange={(event) => setMemberForm({ ...memberForm, fullName: event.target.value })} className="rounded-xl border border-gray-200 px-4 py-3 bg-white" />
-              <input placeholder="Phone number" value={memberForm.phone} onChange={(event) => setMemberForm({ ...memberForm, phone: event.target.value })} className="rounded-xl border border-gray-200 px-4 py-3 bg-white" />
-              <input placeholder="Company or project name (optional)" value={memberForm.company} onChange={(event) => setMemberForm({ ...memberForm, company: event.target.value })} className="rounded-xl border border-gray-200 px-4 py-3 bg-white sm:col-span-2" />
-              <div className="sm:col-span-2 relative"><MapPin className="absolute left-4 top-3.5 w-4 h-4 text-blueprint-500" /><input required placeholder="Saved delivery address" value={memberForm.address} onChange={(event) => setMemberForm({ ...memberForm, address: event.target.value })} className="w-full rounded-xl border border-gray-200 pl-11 pr-4 py-3 bg-white" /></div>
-            </div>
+            <div className="relative"><MapPin className="absolute left-4 top-3.5 w-4 h-4 text-blueprint-500" /><input required placeholder="Street, city, state, ZIP" value={memberForm.address} onChange={(event) => { setMemberForm({ ...memberForm, address: event.target.value }); setAddressDistance(null); setNotice(""); }} onBlur={() => { void validateMemberAddress(); }} className="w-full rounded-xl border border-gray-200 pl-11 pr-32 py-3 bg-white" /><button type="button" onClick={() => { void validateMemberAddress(); }} disabled={addressChecking || !memberForm.address.trim()} className="absolute right-2 top-1.5 rounded-lg bg-blueprint-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{addressChecking ? "Checking..." : "Check address"}</button></div>
+            {addressDistance !== null && <p className={`text-sm mt-3 ${addressDistance <= 10 ? "text-green-700" : "text-red-700"}`}>{addressDistance <= 10 ? `✓ Eligible address: ${addressDistance} miles from the store.` : `✕ Not eligible: ${addressDistance} miles from the store.`}</p>}
             <p className="text-xs text-gray-500 mt-4">Your saved address is the default delivery address. Delivering to another address later adds a $15 alternate-address fee.</p>
+            <div className="mt-5 flex flex-wrap gap-3"><button type="button" onClick={() => router.push("/")} className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100">Cancel / back to home</button><button type="button" onClick={() => router.push("/order")} className="rounded-xl border border-blueprint-200 bg-blueprint-50 px-5 py-2.5 text-sm font-semibold text-blueprint-700 hover:bg-blueprint-100">Order without membership</button></div>
           </section>
 
           {/* Benefits Grid */}

@@ -3,8 +3,8 @@
 import { Upload, FileCheck, Printer, Truck } from "lucide-react";
 
 const steps = [
-  { icon: Upload, step: "01", title: "Upload", desc: "Drag & drop your PDF, DWG, or image file. We accept all major blueprint formats." },
-  { icon: FileCheck, step: "02", title: "Review", desc: "We verify your file and confirm specs. You'll get a quote within 30 minutes." },
+  { icon: Upload, step: "01", title: "Upload", desc: "Upload your PDF. For DWG, DXF, or image files, email info@blueprintsclub.com; extra preparation charges may apply." },
+  { icon: FileCheck, step: "02", title: "Review", desc: "We verify your file, confirm specs, and confirm timing based on workload and order complexity." },
   { icon: Printer, step: "03", title: "Print", desc: "High-quality 24×36 printing on premium paper. Color or B&W, your choice." },
   { icon: Truck, step: "04", title: "Deliver", desc: "Free delivery within 10 miles for members on $50+ orders. Or pick up at our WPB location." },
 ];

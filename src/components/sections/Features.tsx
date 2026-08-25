@@ -30,19 +30,19 @@ const features = [
   {
     icon: Truck,
     title: "Free Delivery",
-    desc: "Members enjoy free delivery within 10 miles on orders $50+. Construction sites +$15.",
+    desc: "Members enjoy free delivery within 10 miles on orders $50+. Alternate addresses add $15.",
     price: "Members $50+",
   },
   {
     icon: Clock,
-    title: "24hr Submissions",
-    desc: "Submit orders anytime, day or night. We process all orders within 24 business hours.",
-    price: "Always",
+    title: "Flexible timing",
+    desc: "Submit orders anytime. We review timing based on workload, file readiness, and order complexity, then confirm it with you.",
+    price: "Timing confirmed",
   },
   {
     icon: Smartphone,
     title: "Easy Upload",
-    desc: "Drag & drop PDF, DWG, DXF, or image files. Mobile-friendly ordering from any device.",
+    desc: "Upload PDF files only for automatic page counting. For other formats, email us; extra preparation charges may apply.",
     price: "Free",
   },
   {

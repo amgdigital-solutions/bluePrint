@@ -42,9 +42,9 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const customerName = typeof body.customerName === "string" ? body.customerName.trim() : "";
-    const customerEmail = typeof body.customerEmail === "string" ? body.customerEmail.trim().toLowerCase() : "";
-    const customerPhone = typeof body.customerPhone === "string" ? body.customerPhone.trim() : null;
+    let customerName = typeof body.customerName === "string" ? body.customerName.trim() : "";
+    let customerEmail = typeof body.customerEmail === "string" ? body.customerEmail.trim().toLowerCase() : "";
+    let customerPhone = typeof body.customerPhone === "string" ? body.customerPhone.trim() : null;
     const uploadedFiles = Array.isArray(body.files) ? body.files : [];
     const items = uploadedFiles.length
       ? uploadedFiles
@@ -64,9 +64,6 @@ export async function POST(request: Request) {
     const alternateDeliveryAddress = body.alternateDeliveryAddress === true;
     const printConsentAccepted = body.printConsentAccepted === true;
 
-    if (!customerName || !/^\S+@\S+\.\S+$/.test(customerEmail) || !customerPhone) {
-      return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
-    }
     if (!printConsentAccepted) {
       return NextResponse.json({ error: "Please confirm the print-mode consent before submitting your order." }, { status: 400 });
     }
@@ -93,15 +90,23 @@ export async function POST(request: Request) {
 
     let isMember = false;
     if (session) {
-      const members = await sql`SELECT is_member FROM profiles WHERE id = ${session.userId} LIMIT 1`;
+      const members = await sql`SELECT is_member, full_name, email, phone FROM profiles WHERE id = ${session.userId} LIMIT 1`;
       isMember = members[0]?.is_member === true;
+      if (isMember) {
+        customerName = String(members[0].full_name || customerName).trim();
+        customerEmail = String(members[0].email || customerEmail).trim().toLowerCase();
+        customerPhone = members[0].phone ? String(members[0].phone).trim() : null;
+      }
+    }
+    if (!customerName || !/^\S+@\S+\.\S+$/.test(customerEmail) || (!isMember && !customerPhone)) {
+      return NextResponse.json({ error: isMember ? "Your member profile is missing a name or email." : "Name, email, and phone are required." }, { status: 400 });
     }
 
     const cartSubtotal = Number(normalizedItems.reduce((sum: number, item: { printType: keyof typeof prices; quantity: number }) => sum + (isMember ? prices[item.printType].member : prices[item.printType].regular) * item.quantity, 0).toFixed(2));
-    if (deliveryChoice === "delivery" && (!isMember || cartSubtotal < 50 || distanceMiles === null || distanceMiles > 10 || !deliveryAddress)) {
-      return NextResponse.json({ error: "Delivery is available to members on $50+ orders within 10 miles. Please choose pickup or call us for special delivery." }, { status: 400 });
+    if (deliveryChoice === "delivery" && (!deliveryAddress || distanceMiles === null || distanceMiles > 10 || (isMember && cartSubtotal < 50))) {
+      return NextResponse.json({ error: isMember ? "Member delivery requires a $50+ order within 10 miles." : "Delivery requires an address within 10 miles." }, { status: 400 });
     }
-    const deliveryFee = deliveryChoice === "delivery" && alternateDeliveryAddress ? 15 : 0;
+    const deliveryFee = deliveryChoice === "delivery" && (!isMember || alternateDeliveryAddress) ? 15 : 0;
     const deliveryType = deliveryChoice === "delivery" ? "delivery" : "pickup";
     const orderNumberBase = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const customerNotes = typeof body.notes === "string" ? body.notes.trim() : "";

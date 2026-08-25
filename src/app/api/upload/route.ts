@@ -6,12 +6,6 @@ export const runtime = "nodejs";
 
 const allowedContentTypes = [
   "application/pdf",
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "application/acad",
-  "application/dxf",
-  "application/octet-stream",
 ];
 
 export async function POST(request: Request) {

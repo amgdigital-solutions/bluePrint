@@ -7,8 +7,8 @@ const steps = [
   {
     icon: Upload,
     title: "Upload Your File",
-    desc: "Drag and drop your PDF, DWG, DXF, or image file directly on our order page. We accept all major blueprint formats up to 50MB.",
-    details: ["PDF, JPG, PNG, DWG, DXF supported", "Mobile-friendly upload", "Instant file validation"],
+    desc: "Upload your PDF directly on our order page. For DWG, DXF, JPG, PNG, or other formats, email info@blueprintsclub.com; extra preparation charges may apply.",
+    details: ["PDF upload and page counting", "Mobile-friendly upload", "Instant file validation"],
   },
   {
     icon: FileCheck,
@@ -25,7 +25,7 @@ const steps = [
   {
     icon: Truck,
     title: "Delivery or Pickup",
-    desc: "Members get free delivery within 10 miles on orders $50+. Construction sites add $15. Or pick up at our WPB location.",
+    desc: "Members get free delivery within 10 miles on orders $50+. Alternate addresses add $15. Non-members can request delivery within 10 miles for $15, or pick up at our WPB location.",
     details: ["Free delivery (members, $50+)", "10-mile radius", "Construction site delivery available"],
   },
 ];

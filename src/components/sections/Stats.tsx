@@ -4,7 +4,7 @@ const stats = [
   { icon: Upload, value: "Easy", label: "Online file upload" },
   { icon: BadgeDollarSign, value: "Member", label: "Exclusive pricing" },
   { icon: Truck, value: "10 mi", label: "Delivery radius" },
-  { icon: Clock, value: "24 hr", label: "Rush turnaround" },
+  { icon: Clock, value: "Flexible", label: "Timing depends on workload" },
 ];
 
 export default function Stats() {

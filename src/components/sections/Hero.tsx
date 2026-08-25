@@ -42,7 +42,7 @@ export default function Hero() {
             </div>
             <div className="mt-10 grid grid-cols-3 gap-5 max-w-xl border-t border-white/15 pt-6">
               <div className="flex items-center gap-2">
-                <div><p className="font-display text-xl font-bold text-white">24h</p><p className="text-xs text-blueprint-300">Turnaround</p></div>
+                <div><p className="font-display text-xl font-bold text-white">Flexible</p><p className="text-xs text-blueprint-300">Timing by workload</p></div>
               </div>
               <div className="flex items-center gap-2">
                 <div><p className="font-display text-xl font-bold text-white">33%</p><p className="text-xs text-blueprint-300">Member savings</p></div>

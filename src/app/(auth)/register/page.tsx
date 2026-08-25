@@ -68,6 +68,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 blueprint-grid py-12">
       <div className="w-full max-w-md">
+        <Link href="/" className="inline-flex items-center gap-2 mb-4 text-sm font-semibold text-blueprint-700 hover:text-blueprint-900">← Back to home</Link>
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-gradient-to-br from-blueprint-600 to-blueprint-800 rounded-xl flex items-center justify-center mx-auto mb-4">

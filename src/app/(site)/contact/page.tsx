@@ -101,7 +101,7 @@ export default function ContactPage() {
                 <div className="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
                   <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-3" />
                   <h4 className="font-semibold text-green-900 mb-1">Message Sent!</h4>
-                  <p className="text-green-700 text-sm">We&apos;ll get back to you within 24 hours.</p>
+                  <p className="text-green-700 text-sm">We&apos;ll review your message and reply during business hours.</p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">

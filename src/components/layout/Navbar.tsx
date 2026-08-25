@@ -37,10 +37,10 @@ export default function Navbar() {
 
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-      scrolled || pathname !== "/" ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100" : "bg-transparent"
+      "bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-100"
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 lg:h-20">
+        <div className="flex items-center justify-between h-20 lg:h-24">
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/blueprints-club-logo.png"
@@ -48,7 +48,7 @@ export default function Navbar() {
               width={1280}
               height={320}
               priority
-              className="h-11 w-auto max-w-[205px] object-contain"
+              className="h-14 w-auto max-w-[250px] object-contain"
             />
           </Link>
 
@@ -69,6 +69,7 @@ export default function Navbar() {
               <Crown className="w-4 h-4" />
               Join Club
             </Link>
+            <a href="tel:+15618049110" className="ml-3 hidden xl:block text-right text-[11px] leading-tight text-gray-500 hover:text-blueprint-700"><span className="font-semibold text-gray-700">Customer service</span><br />Mon–Fri, 9AM–5PM · +1 561-804-9110</a>
             <Link
               href={user ? (user.role === "admin" ? "/admin" : "/dashboard") : `/login?next=${encodeURIComponent(pathname)}`}
               className="ml-2 flex items-center gap-1.5 bg-blueprint-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blueprint-700 transition-all"
@@ -103,6 +104,7 @@ export default function Navbar() {
             <Link href={user ? (user.role === "admin" ? "/admin" : "/dashboard") : `/login?next=${encodeURIComponent(pathname)}`} onClick={() => setMobileOpen(false)} className="block px-4 py-3 rounded-lg text-sm font-semibold text-blueprint-700 bg-blueprint-50">
               {user ? "Dashboard" : "Sign In"}
             </Link>
+            <a href="tel:+15618049110" onClick={() => setMobileOpen(false)} className="block px-4 py-3 text-sm text-gray-600">Customer service: Mon–Fri, 9AM–5PM · +1 561-804-9110</a>
           </div>
         </div>
       )}

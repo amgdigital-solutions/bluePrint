@@ -35,7 +35,7 @@ export default function AboutPage() {
               {[
                 { icon: Award, title: "Quality Guaranteed", desc: "Every print inspected before delivery. If it's not right, we reprint it free." },
                 { icon: Users, title: "Built for Teams", desc: "Corporate accounts with centralized billing and multi-user access coming soon." },
-                { icon: Clock, title: "Speed Matters", desc: "Standard 24hr turnaround. Rush service available for members on call." },
+                { icon: Clock, title: "Clear timing", desc: "We confirm timing based on workload, file readiness, and order complexity. Rush service may be available for members on call." },
                 { icon: Shield, title: "Secure & Private", desc: "Your plans are confidential. Files are encrypted and auto-deleted after 30 days." },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-start gap-4">

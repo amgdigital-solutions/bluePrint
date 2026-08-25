@@ -9,7 +9,7 @@ const plans = [
   { name: "1 Year", price: 435, period: "year", discount: 7, popular: false },
 ];
 
-const benefits = ["Rush prints on call", "Digitizing $1.99", "24hr submissions", "No max prints", "Free delivery $50+", "33% off every print"];
+const benefits = ["Rush prints on call", "Digitizing $1.99", "Timing confirmed", "No max prints", "Free delivery $50+", "33% off every print"];
 
 export default function PricingPreview() {
   return (

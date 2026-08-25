@@ -49,7 +49,7 @@ export default function DashboardHome() {
       {/* Quick Actions */}
       <div className="bg-gradient-to-r from-blueprint-600 to-blueprint-800 rounded-2xl p-8 text-white">
         <h2 className="font-display text-2xl font-bold mb-2">Need More Prints?</h2>
-        <p className="text-blueprint-100 mb-6">Upload your blueprints and get them printed within 24 hours.</p>
+        <p className="text-blueprint-100 mb-6">Upload your blueprints and we&apos;ll confirm timing based on workload and order complexity.</p>
         <Link href="/order" className="inline-flex items-center gap-2 bg-white text-blueprint-700 px-6 py-3 rounded-xl font-bold hover:bg-blueprint-50 transition-all">
           <Upload className="w-5 h-5" />
           Place New Order
