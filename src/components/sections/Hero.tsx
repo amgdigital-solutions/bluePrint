@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Upload, Crown, ArrowRight } from "lucide-react";
 
 export default function Hero() {
@@ -54,22 +55,19 @@ export default function Hero() {
 
           <div className="relative hidden lg:block">
             <div className="relative bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
-              <div className="bg-blueprint-50 rounded-xl p-8 mb-4 blueprint-grid">
-                <div className="border-2 border-blueprint-300 border-dashed rounded-lg p-6 bg-white/80">
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="w-24 h-3 bg-blueprint-200 rounded" />
-                    <div className="w-8 h-8 bg-blueprint-100 rounded-full" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="w-full h-2 bg-blueprint-100 rounded" />
-                    <div className="w-3/4 h-2 bg-blueprint-100 rounded" />
-                    <div className="w-5/6 h-2 bg-blueprint-100 rounded" />
-                  </div>
-                  <div className="mt-4 grid grid-cols-3 gap-2">
-                    <div className="h-16 bg-blueprint-50 rounded border border-blueprint-200" />
-                    <div className="h-16 bg-blueprint-50 rounded border border-blueprint-200" />
-                    <div className="h-16 bg-blueprint-50 rounded border border-blueprint-200" />
-                  </div>
+              <div className="relative h-[350px] overflow-hidden rounded-xl mb-4 bg-blueprint-50">
+                <Image
+                  src="/samples/engineering-site-plan.png"
+                  alt="Engineering site plan blueprint"
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 520px"
+                  className="object-cover"
+                  priority
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-blueprint-950/35 via-transparent to-white/10" />
+                <div className="absolute bottom-4 left-4 rounded-lg bg-white/90 px-3 py-2 shadow-sm backdrop-blur-sm">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blueprint-700">Sample plan</p>
+                  <p className="text-xs font-semibold text-gray-700">Site &amp; civil drawings</p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
