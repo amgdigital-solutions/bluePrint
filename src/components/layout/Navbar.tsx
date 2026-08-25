@@ -9,6 +9,7 @@ import { Menu, X, Crown, User } from "lucide-react";
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<{ role: "user" | "admin" } | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -16,6 +17,14 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    fetch("/api/auth/me").then(async (response) => {
+      if (!response.ok) { setUser(null); return; }
+      const result = await response.json();
+      setUser(result.user || null);
+    }).catch(() => setUser(null));
+  }, [pathname]);
 
   const navLinks = [
     { href: "/", label: "Home" },
@@ -61,11 +70,11 @@ export default function Navbar() {
               Join Club
             </Link>
             <Link
-              href="/login"
+              href={user ? (user.role === "admin" ? "/admin" : "/dashboard") : `/login?next=${encodeURIComponent(pathname)}`}
               className="ml-2 flex items-center gap-1.5 bg-blueprint-600 text-white px-4 py-2.5 rounded-lg text-sm font-semibold hover:bg-blueprint-700 transition-all"
             >
               <User className="w-4 h-4" />
-              Sign In
+              {user ? "Dashboard" : "Sign In"}
             </Link>
           </div>
 
@@ -90,6 +99,9 @@ export default function Navbar() {
             ))}
             <Link href="/membership" className="block px-4 py-3 rounded-lg text-sm font-bold text-yellow-800 bg-yellow-50">
               Join Blueprints Club
+            </Link>
+            <Link href={user ? (user.role === "admin" ? "/admin" : "/dashboard") : `/login?next=${encodeURIComponent(pathname)}`} onClick={() => setMobileOpen(false)} className="block px-4 py-3 rounded-lg text-sm font-semibold text-blueprint-700 bg-blueprint-50">
+              {user ? "Dashboard" : "Sign In"}
             </Link>
           </div>
         </div>
