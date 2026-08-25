@@ -61,6 +61,7 @@ export async function POST(request: Request) {
     const deliveryAddress = typeof body.deliveryAddress === "string" ? body.deliveryAddress.trim() : null;
     const distanceMiles = body.distanceMiles == null ? null : Number(body.distanceMiles);
     const deliveryChoice = body.deliveryChoice === "delivery" ? "delivery" : "pickup";
+    const alternateDeliveryAddress = body.alternateDeliveryAddress === true;
     const printConsentAccepted = body.printConsentAccepted === true;
 
     if (!customerName || !/^\S+@\S+\.\S+$/.test(customerEmail) || !customerPhone) {
@@ -100,8 +101,8 @@ export async function POST(request: Request) {
     if (deliveryChoice === "delivery" && (!isMember || cartSubtotal < 50 || distanceMiles === null || distanceMiles > 10 || !deliveryAddress)) {
       return NextResponse.json({ error: "Delivery is available to members on $50+ orders within 10 miles. Please choose pickup or call us for special delivery." }, { status: 400 });
     }
-    const deliveryFee = deliveryChoice === "delivery" && isConstructionSite ? 15 : 0;
-    const deliveryType = deliveryChoice === "delivery" ? (isConstructionSite ? "construction_site" : "delivery") : "pickup";
+    const deliveryFee = deliveryChoice === "delivery" && alternateDeliveryAddress ? 15 : 0;
+    const deliveryType = deliveryChoice === "delivery" ? "delivery" : "pickup";
     const orderNumberBase = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const customerNotes = typeof body.notes === "string" ? body.notes.trim() : "";
     const notes = ["Print-mode consent accepted by customer.", customerNotes].filter(Boolean).join(" ") || null;
