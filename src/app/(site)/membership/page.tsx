@@ -1,14 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Crown, Zap, Truck, Clock, Shield, Printer, AlertTriangle, MapPin, UserRound } from "lucide-react";
 
 const plans = [
-  { name: "Monthly Club", price: 39, period: "month", detail: "First month free · 6-month commitment", popular: false },
-  { name: "6-Month Club", price: 37.50, period: "month", detail: "$225 total · billed every 6 months", popular: true },
-  { name: "Annual Club", price: 36.25, period: "month", detail: "$435 total · billed annually", popular: false },
+  { name: "Monthly Club", tier: "monthly", price: 39, period: "month", detail: "First month free · 6-month commitment", popular: false },
+  { name: "6-Month Club", tier: "6month", price: 37.50, period: "month", detail: "$225 total · billed every 6 months", popular: true },
+  { name: "Annual Club", tier: "yearly", price: 36.25, period: "month", detail: "$435 total · billed annually", popular: false },
 ];
 
 const benefits = [
@@ -25,6 +25,11 @@ export default function MembershipPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState("");
   const [memberForm, setMemberForm] = useState({ fullName: "", phone: "", company: "", address: "" });
+  const [profileEmail, setProfileEmail] = useState("");
+
+  useEffect(() => {
+    fetch("/api/profile").then(async (response) => { if (!response.ok) return; const result = await response.json(); setProfileEmail(result.profile.email || ""); setMemberForm({ fullName: result.profile.full_name || "", phone: result.profile.phone || "", company: result.profile.company || "", address: result.profile.address || "" }); }).catch(() => undefined);
+  }, []);
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
     setIsLoading(true);
@@ -34,8 +39,21 @@ export default function MembershipPage() {
       setIsLoading(false);
       return;
     }
-    setNotice(`${plan.name} selected. Your first month is free on the Monthly Club plan; Square checkout will confirm the membership terms before payment.`);
-    setIsLoading(false);
+    if (!profileEmail) {
+      setNotice("Please sign in before joining the Club so we can connect the Square subscription to your account.");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const profileResponse = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fullName: memberForm.fullName, email: profileEmail, phone: memberForm.phone, company: memberForm.company, address: memberForm.address }) });
+      const profileResult = await profileResponse.json();
+      if (!profileResponse.ok) throw new Error(profileResult.error || "Unable to save your membership details.");
+      const subscriptionResponse = await fetch("/api/membership/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tier: plan.tier }) });
+      const subscriptionResult = await subscriptionResponse.json();
+      if (!subscriptionResponse.ok) throw new Error(subscriptionResult.error || "Unable to start your membership.");
+      setNotice(subscriptionResult.message || "Membership started. Check your email for the Square invoice.");
+    } catch (reason) { setNotice(reason instanceof Error ? reason.message : "Unable to start your membership."); }
+    finally { setIsLoading(false); }
   };
 
   return (

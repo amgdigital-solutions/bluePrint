@@ -1,0 +1,52 @@
+import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
+import { sql } from "@/lib/db";
+import { getSessionFromRequest } from "@/lib/auth";
+
+export const runtime = "nodejs";
+
+const plans = {
+  monthly: { tier: "monthly", variation: "SQUARE_MONTHLY_PLAN_VARIATION_ID" },
+  "6month": { tier: "6month", variation: "SQUARE_6MONTH_PLAN_VARIATION_ID" },
+  yearly: { tier: "yearly", variation: "SQUARE_YEARLY_PLAN_VARIATION_ID" },
+} as const;
+
+export async function POST(request: Request) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.json({ error: "Please sign in before joining the Club." }, { status: 401 });
+  if (!sql) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
+
+  try {
+    const body = await request.json();
+    const requestedTier = typeof body.tier === "string" ? body.tier : "";
+    const tier = requestedTier in plans ? requestedTier as keyof typeof plans : null;
+    const plan = tier ? plans[tier] : null;
+    if (!plan) return NextResponse.json({ error: "Choose a valid membership plan." }, { status: 400 });
+
+    const profileRows = await sql`SELECT id, email, full_name, phone, company, address FROM profiles WHERE id = ${session.userId} LIMIT 1`;
+    const profile = profileRows[0];
+    const variationId = process.env[plan.variation];
+    const token = process.env.SQUARE_ACCESS_TOKEN;
+    const locationId = process.env.SQUARE_LOCATION_ID;
+    const applicationId = process.env.SQUARE_APPLICATION_ID;
+    if (!profile || !variationId || !token || !locationId || !applicationId) return NextResponse.json({ error: "Square membership setup is incomplete." }, { status: 503 });
+
+    const baseUrl = process.env.SQUARE_ENVIRONMENT === "production" ? "https://connect.squareup.com" : "https://connect.squareupsandbox.com";
+    const headers = { Authorization: `Bearer ${token}`, "Square-Version": "2026-08-19", "Content-Type": "application/json" };
+    const customerResponse = await fetch(`${baseUrl}/v2/customers`, { method: "POST", headers, body: JSON.stringify({ idempotency_key: randomUUID(), given_name: profile.full_name, email_address: profile.email, phone_number: profile.phone || undefined, company_name: profile.company || undefined, reference_id: profile.id }) });
+    const customerResult = await customerResponse.json();
+    if (!customerResponse.ok || !customerResult.customer?.id) return NextResponse.json({ error: customerResult.errors?.[0]?.detail || "Square could not create the customer record." }, { status: 502 });
+
+    const subscriptionResponse = await fetch(`${baseUrl}/v2/subscriptions`, { method: "POST", headers, body: JSON.stringify({ idempotency_key: randomUUID(), location_id: locationId, plan_variation_id: variationId, customer_id: customerResult.customer.id, timezone: "America/New_York", source: { name: "Blueprints Club website" } }) });
+    const subscriptionResult = await subscriptionResponse.json();
+    if (!subscriptionResponse.ok || !subscriptionResult.subscription?.id) return NextResponse.json({ error: subscriptionResult.errors?.[0]?.detail || "Square could not create the subscription." }, { status: 502 });
+
+    const subscription = subscriptionResult.subscription;
+    await sql`INSERT INTO subscriptions (user_id, square_subscription_id, status, tier, current_period_start, current_period_end) VALUES (${profile.id}, ${subscription.id}, 'active', ${plan.tier}, ${subscription.start_date || null}, ${subscription.charged_through_date || null}) ON CONFLICT (square_subscription_id) DO UPDATE SET status = 'active', tier = ${plan.tier}, updated_at = now()`;
+    await sql`UPDATE profiles SET is_member = true, membership_tier = ${plan.tier}, membership_expires_at = ${subscription.charged_through_date || null} WHERE id = ${profile.id}`;
+    return NextResponse.json({ subscription: { id: subscription.id, tier: plan.tier, status: subscription.status }, message: "Membership created. Square will send the subscription invoice to your email." }, { status: 201 });
+  } catch (error) {
+    console.error("Membership subscription failed", error);
+    return NextResponse.json({ error: "Unable to start membership right now." }, { status: 500 });
+  }
+}
