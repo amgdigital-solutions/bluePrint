@@ -30,7 +30,19 @@ export default function RegisterPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to create your account.");
       setSuccess(true);
-      window.setTimeout(() => router.push("/dashboard"), 800);
+      window.setTimeout(() => {
+        const params = new URLSearchParams(window.location.search);
+        const requestedPath = params.get("next");
+        const selectedPlan = params.get("plan");
+        const safeNext = requestedPath && requestedPath.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : null;
+        if (!safeNext) {
+          router.push("/dashboard");
+          return;
+        }
+        const destination = new URL(safeNext, window.location.origin);
+        if (selectedPlan && destination.pathname === "/membership") destination.searchParams.set("plan", selectedPlan);
+        router.push(`${destination.pathname}${destination.search}`);
+      }, 800);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to create your account.");
     } finally {
@@ -45,7 +57,7 @@ export default function RegisterPage() {
           <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h1 className="font-display text-2xl font-bold text-gray-900 mb-2">Account Created!</h1>
           <p className="text-gray-600 mb-6">Welcome to Blueprints Club. You can now sign in and start ordering.</p>
-          <Link href="/login" className="btn-primary inline-block px-8 py-3 rounded-xl font-bold">
+            <Link href="/login?next=/membership" className="btn-primary inline-block px-8 py-3 rounded-xl font-bold">
             Sign In
           </Link>
         </div>
@@ -102,7 +114,7 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center text-sm">
             <span className="text-gray-500">Already have an account? </span>
-            <Link href="/login" className="text-blueprint-600 font-semibold hover:text-blueprint-800">Sign In</Link>
+            <Link href="/login?next=/membership" className="text-blueprint-600 font-semibold hover:text-blueprint-800">Sign In</Link>
           </div>
         </div>
       </div>

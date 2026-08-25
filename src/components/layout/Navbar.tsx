@@ -63,7 +63,7 @@ export default function Navbar() {
               </Link>
             ))}
             <Link
-              href="/membership"
+              href={user ? "/membership" : "/register?next=/membership"}
               className="ml-3 flex items-center gap-1.5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 px-4 py-2.5 rounded-lg text-sm font-bold hover:shadow-lg transition-all"
             >
               <Crown className="w-4 h-4" />
@@ -97,7 +97,7 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
-            <Link href="/membership" className="block px-4 py-3 rounded-lg text-sm font-bold text-yellow-800 bg-yellow-50">
+            <Link href={user ? "/membership" : "/register?next=/membership"} onClick={() => setMobileOpen(false)} className="block px-4 py-3 rounded-lg text-sm font-bold text-yellow-800 bg-yellow-50">
               Join Blueprints Club
             </Link>
             <Link href={user ? (user.role === "admin" ? "/admin" : "/dashboard") : `/login?next=${encodeURIComponent(pathname)}`} onClick={() => setMobileOpen(false)} className="block px-4 py-3 rounded-lg text-sm font-semibold text-blueprint-700 bg-blueprint-50">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Crown, Zap, Truck, Clock, Shield, Printer, AlertTriangle, MapPin, UserRound } from "lucide-react";
@@ -21,6 +22,7 @@ const benefits = [
 ];
 
 export default function MembershipPage() {
+  const router = useRouter();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [notice, setNotice] = useState("");
@@ -32,6 +34,10 @@ export default function MembershipPage() {
   }, []);
 
   const handleSubscribe = async (plan: typeof plans[0]) => {
+    if (!profileEmail) {
+      router.push(`/register?next=/membership&plan=${encodeURIComponent(plan.tier)}`);
+      return;
+    }
     setIsLoading(true);
     setSelectedPlan(plan.name);
     if (!memberForm.fullName || !memberForm.address) {
@@ -69,6 +75,17 @@ export default function MembershipPage() {
           </div>
 
           {notice && <div role="status" className="max-w-3xl mx-auto mb-10 rounded-2xl border border-blueprint-200 bg-blueprint-50 px-5 py-4 text-center text-sm text-blueprint-900">{notice}</div>}
+
+          {!profileEmail && (
+            <div className="max-w-3xl mx-auto mb-10 rounded-2xl border border-blueprint-200 bg-blueprint-50 px-6 py-5 text-center">
+              <h2 className="font-display text-xl font-bold text-gray-900">New to Blueprints Club?</h2>
+              <p className="mt-1 text-sm text-gray-600">Create your free account first. After registration, you&apos;ll return here to select a plan and save your member details.</p>
+              <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3">
+                <button onClick={() => router.push("/register?next=/membership")} className="btn-primary rounded-xl px-6 py-3 font-semibold">Create an account</button>
+                <button onClick={() => router.push("/login?next=/membership")} className="rounded-xl border border-blueprint-300 bg-white px-6 py-3 font-semibold text-blueprint-700 hover:bg-blueprint-100">Already have an account? Sign in</button>
+              </div>
+            </div>
+          )}
 
           {/* Pricing Cards */}
           <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">
