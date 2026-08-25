@@ -61,9 +61,13 @@ export async function POST(request: Request) {
     const deliveryAddress = typeof body.deliveryAddress === "string" ? body.deliveryAddress.trim() : null;
     const distanceMiles = body.distanceMiles == null ? null : Number(body.distanceMiles);
     const deliveryChoice = body.deliveryChoice === "delivery" ? "delivery" : "pickup";
+    const printConsentAccepted = body.printConsentAccepted === true;
 
     if (!customerName || !/^\S+@\S+\.\S+$/.test(customerEmail) || !customerPhone) {
       return NextResponse.json({ error: "Name, email, and phone are required." }, { status: 400 });
+    }
+    if (!printConsentAccepted) {
+      return NextResponse.json({ error: "Please confirm the print-mode consent before submitting your order." }, { status: 400 });
     }
     const normalizedItems = items.map((item: { printType?: unknown; quantity?: unknown }) => ({ printType: item.printType, quantity: Number(item.quantity) })).filter((item: { printType: unknown; quantity: number }) => isPrintType(item.printType) && Number.isInteger(item.quantity) && item.quantity >= 1 && item.quantity <= 10000);
     if (!normalizedItems.length || normalizedItems.length !== items.length) {
@@ -99,7 +103,8 @@ export async function POST(request: Request) {
     const deliveryFee = deliveryChoice === "delivery" && isConstructionSite ? 15 : 0;
     const deliveryType = deliveryChoice === "delivery" ? (isConstructionSite ? "construction_site" : "delivery") : "pickup";
     const orderNumberBase = `ORD-${Date.now().toString(36).toUpperCase()}`;
-    const notes = typeof body.notes === "string" ? body.notes.trim() : null;
+    const customerNotes = typeof body.notes === "string" ? body.notes.trim() : "";
+    const notes = ["Print-mode consent accepted by customer.", customerNotes].filter(Boolean).join(" ") || null;
 
     const orders = [];
     for (const [index, item] of normalizedItems.entries()) {
