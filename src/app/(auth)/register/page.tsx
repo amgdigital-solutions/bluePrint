@@ -7,7 +7,7 @@ import { Eye, EyeOff, UserPlus, DraftingCompass, CheckCircle2 } from "lucide-rea
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({ fullName: "", email: "", phone: "", password: "", confirmPassword: "" });
+  const [formData, setFormData] = useState({ fullName: "", email: "", phone: "", address: "", password: "", confirmPassword: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -93,6 +93,11 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Phone</label>
               <input type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blueprint-500 transition-colors" placeholder="+1 (561) 804-9110" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Address</label>
+              <textarea required value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blueprint-500 transition-colors resize-none" placeholder="Street, city, state, ZIP" rows={3} />
+              <p className="text-xs text-gray-500 mt-1">We use this address to check delivery eligibility within 10 miles.</p>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>

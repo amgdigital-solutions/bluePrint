@@ -11,11 +11,13 @@ export async function POST(request: Request) {
     const fullName = typeof body.fullName === "string" ? body.fullName.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : null;
+    const address = typeof body.address === "string" ? body.address.trim() : "";
     const password = typeof body.password === "string" ? body.password : "";
 
     if (!sql) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
     if (fullName.length < 2) return NextResponse.json({ error: "Please enter your full name." }, { status: 400 });
     if (!/^\S+@\S+\.\S+$/.test(email)) return NextResponse.json({ error: "Please enter a valid email address." }, { status: 400 });
+    if (address.length < 8) return NextResponse.json({ error: "Please enter your delivery address." }, { status: 400 });
     if (password.length < 8) return NextResponse.json({ error: "Password must be at least 8 characters." }, { status: 400 });
 
     const existing = await sql`SELECT id FROM profiles WHERE lower(email) = ${email} LIMIT 1`;
@@ -23,8 +25,8 @@ export async function POST(request: Request) {
 
     const passwordHash = await hash(password, 12);
     const rows = await sql`
-      INSERT INTO profiles (email, password_hash, full_name, phone)
-      VALUES (${email}, ${passwordHash}, ${fullName}, ${phone || null})
+      INSERT INTO profiles (email, password_hash, full_name, phone, address)
+      VALUES (${email}, ${passwordHash}, ${fullName}, ${phone || null}, ${address})
       RETURNING id, email, full_name, role
     `;
     const user = rows[0] as { id: string; email: string; full_name: string; role: "user" | "admin" };
