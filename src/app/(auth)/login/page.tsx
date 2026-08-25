@@ -25,7 +25,9 @@ export default function LoginPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to sign in.");
-      router.push(result.user.role === "admin" ? "/admin" : "/dashboard");
+      const requestedPath = new URLSearchParams(window.location.search).get("next");
+      const safeNext = requestedPath && requestedPath.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : null;
+      router.push(result.user.role === "admin" ? (safeNext || "/admin") : "/dashboard");
       router.refresh();
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "Unable to sign in.");
