@@ -103,7 +103,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">{order.order_number}</p>
                       <p className="text-xs text-gray-500">{itemLabel}</p>
-                      {order.file_url && <a href={`/api/orders/${order.id}/file`} className="text-xs text-blueprint-600 hover:text-blueprint-800">Download file</a>}
+                      {Array.isArray(order.files) && order.files.length > 0 ? <div className="mt-1 space-y-1">{order.files.map((file: { id: string; file_name: string; page_count: number; sets: number }) => <a key={file.id} href={`/api/orders/${order.id}/file?fileId=${file.id}`} className="block text-xs text-blueprint-600 hover:text-blueprint-800">{file.file_name} · {file.page_count}p × {file.sets}</a>)}</div> : order.file_url && <a href={`/api/orders/${order.id}/file`} className="text-xs text-blueprint-600 hover:text-blueprint-800">Download file</a>}
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">{customer}</p>

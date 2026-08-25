@@ -86,6 +86,20 @@ CREATE TABLE IF NOT EXISTS orders (
 CREATE INDEX IF NOT EXISTS orders_user_id_created_at_idx ON orders (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_status_created_at_idx ON orders (status, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS order_files (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  file_url text NOT NULL,
+  file_name text NOT NULL,
+  print_type print_type NOT NULL,
+  page_count integer NOT NULL CHECK (page_count > 0),
+  sets integer NOT NULL CHECK (sets > 0),
+  sheet_count integer NOT NULL CHECK (sheet_count > 0),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS order_files_order_id_idx ON order_files (order_id, created_at);
+
 CREATE TABLE IF NOT EXISTS order_status_history (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_id uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
