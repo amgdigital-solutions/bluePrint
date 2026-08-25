@@ -9,9 +9,25 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ fullName: "", email: "", phone: "", address: "", password: "", confirmPassword: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [addressDistance, setAddressDistance] = useState<number | null>(null);
+  const [addressChecking, setAddressChecking] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+
+  const checkAddress = async () => {
+    if (!formData.address.trim()) { setError("Please enter your delivery address first."); return false; }
+    setAddressChecking(true); setError("");
+    try {
+      const response = await fetch("/api/distance", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address: formData.address }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to validate that address.");
+      setAddressDistance(result.distance);
+      if (result.distance > 10) { setError(`This address is ${result.distance} miles away. Membership requires an address within 10 miles.`); return false; }
+      return true;
+    } catch (reason) { setAddressDistance(null); setError(reason instanceof Error ? reason.message : "Unable to validate that address."); return false; }
+    finally { setAddressChecking(false); }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +35,10 @@ export default function RegisterPage() {
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
       return;
+    }
+    if (addressDistance === null || addressDistance > 10) {
+      const addressIsEligible = await checkAddress();
+      if (!addressIsEligible) return;
     }
     setIsLoading(true);
     try {
@@ -97,8 +117,9 @@ export default function RegisterPage() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Delivery Address</label>
-              <textarea required value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blueprint-500 transition-colors resize-none" placeholder="Street, city, state, ZIP" rows={3} />
-              <p className="text-xs text-gray-500 mt-1">We use this address to check delivery eligibility within 10 miles.</p>
+              <div className="relative"><textarea required value={formData.address} onChange={(e) => { setFormData({ ...formData, address: e.target.value }); setAddressDistance(null); setError(""); }} onBlur={() => { void checkAddress(); }} className="w-full px-4 py-3 pr-32 rounded-lg border border-gray-200 focus:border-blueprint-500 transition-colors resize-none" placeholder="Street, city, state, ZIP" rows={3} /><button type="button" onClick={() => { void checkAddress(); }} disabled={addressChecking || !formData.address.trim()} className="absolute right-2 top-2 rounded-lg bg-blueprint-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{addressChecking ? "Checking..." : "Check address"}</button></div>
+              <p className="text-xs text-gray-500 mt-1">Membership requires a verified address within 10 miles of our store.</p>
+              {addressDistance !== null && <p className={`text-sm mt-2 ${addressDistance <= 10 ? "text-green-700" : "text-red-700"}`}>{addressDistance <= 10 ? `✓ Address verified — ${addressDistance} miles from the store.` : `✕ Address not eligible — ${addressDistance} miles from the store.`}</p>}
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>

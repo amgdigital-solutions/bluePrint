@@ -11,6 +11,17 @@ const plans = {
   yearly: { tier: "yearly", variation: "SQUARE_YEARLY_PLAN_VARIATION_ID" },
 } as const;
 
+const BUSINESS_LAT = 26.6834;
+const BUSINESS_LNG = -80.0543;
+
+function milesBetween(lat: number, lng: number) {
+  const radius = 3959;
+  const dLat = (lat - BUSINESS_LAT) * Math.PI / 180;
+  const dLng = (lng - BUSINESS_LNG) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(BUSINESS_LAT * Math.PI / 180) * Math.cos(lat * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return radius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export async function POST(request: Request) {
   const session = await getSessionFromRequest(request);
   if (!session) return NextResponse.json({ error: "Please sign in before joining the Club." }, { status: 401 });
@@ -30,6 +41,14 @@ export async function POST(request: Request) {
     const locationId = process.env.SQUARE_LOCATION_ID;
     const applicationId = process.env.SQUARE_APPLICATION_ID;
     if (!profile || !variationId || !token || !locationId || !applicationId) return NextResponse.json({ error: "Square membership setup is incomplete." }, { status: 503 });
+    if (!profile.address || String(profile.address).trim().length < 5) return NextResponse.json({ error: "A verified delivery address within 10 miles is required before joining." }, { status: 400 });
+    const addressQuery = new URLSearchParams({ q: String(profile.address), format: "jsonv2", limit: "1", countrycodes: "us" });
+    const addressResponse = await fetch(`https://nominatim.openstreetmap.org/search?${addressQuery}`, { headers: { "User-Agent": "BlueprintsClub/1.0 contact@blueprintsclub.com" }, next: { revalidate: 3600 } });
+    const addressResults = addressResponse.ok ? await addressResponse.json() : [];
+    const location = addressResults[0];
+    if (!location) return NextResponse.json({ error: "We could not verify that delivery address." }, { status: 400 });
+    const addressDistance = Number(milesBetween(Number(location.lat), Number(location.lon)).toFixed(1));
+    if (addressDistance > 10) return NextResponse.json({ error: `This address is ${addressDistance} miles away. Membership requires an address within 10 miles.` }, { status: 400 });
 
     const baseUrl = process.env.SQUARE_ENVIRONMENT === "production" ? "https://connect.squareup.com" : "https://connect.squareupsandbox.com";
     const headers = { Authorization: `Bearer ${token}`, "Square-Version": "2026-08-19", "Content-Type": "application/json" };
