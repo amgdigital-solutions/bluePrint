@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
-import { createOrderPaymentLink } from "@/lib/square";
 
 export const runtime = "nodejs";
 
@@ -153,28 +152,7 @@ export async function POST(request: Request) {
     }
 
     const paymentTotal = Number(orders.reduce((sum, order) => sum + Number(order.total_amount), 0).toFixed(2));
-    try {
-      const siteUrl = (process.env.NEXTAUTH_URL || new URL(request.url).origin).replace(/\/$/, "");
-      const paymentLink = await createOrderPaymentLink({
-        orderReference: orderNumberBase,
-        amountCents: Math.round(paymentTotal * 100),
-        buyerEmail: customerEmail,
-        redirectUrl: `${siteUrl}/order/success?reference=${encodeURIComponent(orderNumberBase)}`,
-      });
-      await sql`
-        UPDATE orders SET
-          payment_status = 'pending',
-          square_order_id = ${paymentLink.orderId},
-          square_payment_link_id = ${paymentLink.id},
-          square_payment_url = ${paymentLink.url}
-        WHERE order_group_id = ${orderNumberBase}
-      `;
-      return NextResponse.json({ order: orders[0], orders, checkoutUrl: paymentLink.url, orderReference: orderNumberBase }, { status: 201 });
-    } catch (paymentError) {
-      console.error("Square checkout creation failed", paymentError);
-      await sql`UPDATE orders SET payment_status = 'checkout_failed' WHERE order_group_id = ${orderNumberBase}`;
-      return NextResponse.json({ error: "Your order was saved, but secure payment could not be opened. Please contact Blueprints Club and provide this reference.", orderReference: orderNumberBase }, { status: 502 });
-    }
+    return NextResponse.json({ order: orders[0], orders, checkoutUrl: `/checkout?orderId=${encodeURIComponent(String(orders[0].id))}`, orderReference: orderNumberBase, paymentTotal }, { status: 201 });
   } catch (error) {
     console.error("Order creation failed", error);
     return NextResponse.json({ error: "Unable to submit your order right now." }, { status: 500 });

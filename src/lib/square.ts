@@ -144,3 +144,48 @@ export async function createOrderPaymentLink(input: {
     url: result.payment_link.url,
   };
 }
+
+export async function createSquarePayment(input: {
+  orderReference: string;
+  amountCents: number;
+  buyerEmail: string;
+  sourceId: string;
+}): Promise<{ id: string; orderId: string | null; status: string; receiptUrl: string | null }> {
+  const accessToken = squareAccessToken();
+  const locationId = normalizeSquareValue(process.env.SQUARE_LOCATION_ID);
+  if (!accessToken || !locationId) throw new Error("Square payments are not configured.");
+
+  const response = await fetch(`${squareBaseUrl()}/v2/payments`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+      "Square-Version": SQUARE_API_VERSION,
+    },
+    body: JSON.stringify({
+      source_id: input.sourceId,
+      idempotency_key: `blueprints-payment-${input.orderReference}`,
+      amount_money: { amount: input.amountCents, currency: "USD" },
+      location_id: locationId,
+      buyer_email_address: input.buyerEmail,
+      reference_id: input.orderReference,
+      note: `Blueprints Club order ${input.orderReference}`,
+      autocomplete: true,
+    }),
+    cache: "no-store",
+  });
+  const result = await response.json() as {
+    payment?: { id?: string; order_id?: string; status?: string; receipt_url?: string };
+    errors?: Array<{ detail?: string; code?: string }>;
+  };
+  if (!response.ok || !result.payment?.id) {
+    const detail = result.errors?.map((error) => error.detail || error.code).filter(Boolean).join("; ");
+    throw new Error(detail || "Square could not process the payment.");
+  }
+  return {
+    id: result.payment.id,
+    orderId: result.payment.order_id ?? null,
+    status: result.payment.status || "PENDING",
+    receiptUrl: result.payment.receipt_url ?? null,
+  };
+}
