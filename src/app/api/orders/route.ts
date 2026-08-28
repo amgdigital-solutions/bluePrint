@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
+import { createOrderPaymentLink } from "@/lib/square";
 
 export const runtime = "nodejs";
 
@@ -128,12 +129,12 @@ export async function POST(request: Request) {
       const totalAmount = Number((subtotal + (isFirstItem ? deliveryFee + bindingFee + taxAmount : 0)).toFixed(2));
       const rows = await sql`
         INSERT INTO orders (
-        order_number, user_id, customer_name, customer_email, customer_phone,
+        order_number, order_group_id, payment_status, user_id, customer_name, customer_email, customer_phone,
         print_type, quantity, unit_price, total_amount, delivery_fee, binding_fee, tax_amount,
         delivery_type, delivery_address, distance_miles, is_construction_site,
         file_url, file_name, notes
         ) VALUES (
-        ${normalizedItems.length > 1 ? `${orderNumberBase}-${index + 1}` : orderNumberBase}, ${session?.userId || null}, ${customerName}, ${customerEmail}, ${customerPhone},
+        ${normalizedItems.length > 1 ? `${orderNumberBase}-${index + 1}` : orderNumberBase}, ${orderNumberBase}, 'unpaid', ${session?.userId || null}, ${customerName}, ${customerEmail}, ${customerPhone},
         ${printType}, ${quantity}, ${unitPrice}, ${totalAmount}, ${isFirstItem ? deliveryFee : 0}, ${isFirstItem ? bindingFee : 0}, ${isFirstItem ? taxAmount : 0},
         ${deliveryType}, ${deliveryAddress}, ${distanceMiles}, ${isConstructionSite},
         ${normalizedFiles.find((file: { printType: unknown }) => file.printType === printType)?.fileUrl || legacyFileUrl}, ${normalizedFiles.find((file: { printType: unknown }) => file.printType === printType)?.fileName || legacyFileName}, ${notes}
@@ -151,7 +152,29 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ order: orders[0], orders }, { status: 201 });
+    const paymentTotal = Number(orders.reduce((sum, order) => sum + Number(order.total_amount), 0).toFixed(2));
+    try {
+      const siteUrl = (process.env.NEXTAUTH_URL || new URL(request.url).origin).replace(/\/$/, "");
+      const paymentLink = await createOrderPaymentLink({
+        orderReference: orderNumberBase,
+        amountCents: Math.round(paymentTotal * 100),
+        buyerEmail: customerEmail,
+        redirectUrl: `${siteUrl}/order/success?reference=${encodeURIComponent(orderNumberBase)}`,
+      });
+      await sql`
+        UPDATE orders SET
+          payment_status = 'pending',
+          square_order_id = ${paymentLink.orderId},
+          square_payment_link_id = ${paymentLink.id},
+          square_payment_url = ${paymentLink.url}
+        WHERE order_group_id = ${orderNumberBase}
+      `;
+      return NextResponse.json({ order: orders[0], orders, checkoutUrl: paymentLink.url, orderReference: orderNumberBase }, { status: 201 });
+    } catch (paymentError) {
+      console.error("Square checkout creation failed", paymentError);
+      await sql`UPDATE orders SET payment_status = 'checkout_failed' WHERE order_group_id = ${orderNumberBase}`;
+      return NextResponse.json({ error: "Your order was saved, but secure payment could not be opened. Please contact Blueprints Club and provide this reference.", orderReference: orderNumberBase }, { status: 502 });
+    }
   } catch (error) {
     console.error("Order creation failed", error);
     return NextResponse.json({ error: "Unable to submit your order right now." }, { status: 500 });

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Filter, Clock, Package, Printer, CheckCircle2, Truck, XCircle, ChevronDown, ArrowUpDown } from "lucide-react";
+import { Search, Clock, Package, Printer, CheckCircle2, Truck, XCircle, Trash2 } from "lucide-react";
 
 const statusConfig: Record<string, { label: string; color: string; icon: any; next: string | null }> = {
   pending: { label: "Pending", color: "bg-yellow-100 text-yellow-700", icon: Clock, next: "processing" },
@@ -18,6 +18,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [deletingFilesFor, setDeletingFilesFor] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/orders?scope=all")
@@ -42,6 +43,21 @@ export default function AdminOrdersPage() {
       setOrders((current) => current.map((order) => (order.id === orderId ? result.order : order)));
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : "Unable to update order status.");
+    }
+  };
+
+  const deleteFiles = async (orderId: string) => {
+    if (!window.confirm("Delete every uploaded PDF for this order? This cannot be undone.")) return;
+    setDeletingFilesFor(orderId); setError("");
+    try {
+      const response = await fetch(`/api/orders/${orderId}/file`, { method: "DELETE" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to delete files.");
+      setOrders((current) => current.map((order) => order.id === orderId ? { ...order, files: [], file_url: null, file_name: null, files_deleted_at: new Date().toISOString() } : order));
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Unable to delete files.");
+    } finally {
+      setDeletingFilesFor(null);
     }
   };
 
@@ -103,7 +119,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4">
                       <p className="font-semibold text-gray-900">{order.order_number}</p>
                       <p className="text-xs text-gray-500">{itemLabel}</p>
-                      {Array.isArray(order.files) && order.files.length > 0 ? <div className="mt-1 space-y-1">{order.files.map((file: { id: string; file_name: string; page_count: number; sets: number }) => <a key={file.id} href={`/api/orders/${order.id}/file?fileId=${file.id}`} className="block text-xs text-blueprint-600 hover:text-blueprint-800">{file.file_name} · {file.page_count}p × {file.sets}</a>)}</div> : order.file_url && <a href={`/api/orders/${order.id}/file`} className="text-xs text-blueprint-600 hover:text-blueprint-800">Download file</a>}
+                      {Array.isArray(order.files) && order.files.length > 0 ? <div className="mt-1 space-y-1">{order.files.map((file: { id: string; file_name: string; page_count: number; sets: number }) => <a key={file.id} href={`/api/orders/${order.id}/file?fileId=${file.id}`} className="block text-xs text-blueprint-600 hover:text-blueprint-800">{file.file_name} · {file.page_count}p × {file.sets}</a>)}<button type="button" disabled={deletingFilesFor === order.id} onClick={() => void deleteFiles(order.id)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 disabled:opacity-50"><Trash2 className="h-3 w-3" />{deletingFilesFor === order.id ? "Deleting..." : "Delete all PDFs"}</button></div> : order.file_url ? <div className="mt-1 space-y-1"><a href={`/api/orders/${order.id}/file`} className="block text-xs text-blueprint-600 hover:text-blueprint-800">Download file</a><button type="button" disabled={deletingFilesFor === order.id} onClick={() => void deleteFiles(order.id)} className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 disabled:opacity-50"><Trash2 className="h-3 w-3" />{deletingFilesFor === order.id ? "Deleting..." : "Delete PDF"}</button></div> : <p className="mt-1 text-xs text-gray-400">Files deleted</p>}
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">{customer}</p>
@@ -115,6 +131,7 @@ export default function AdminOrdersPage() {
                         <StatusIcon className="w-3.5 h-3.5" />
                         {status.label}
                       </span>
+                      <p className={`mt-1 text-xs font-medium ${order.payment_status === "paid" ? "text-green-700" : order.payment_status === "failed" || order.payment_status === "checkout_failed" ? "text-red-600" : "text-amber-700"}`}>Payment: {String(order.payment_status || "unpaid").replace("_", " ")}</p>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{order.delivery_type === "construction_site" ? "Construction +$15" : order.delivery_type === "delivery" ? "Delivery" : "Pickup"}</td>
                     <td className="px-6 py-4 text-right font-semibold text-gray-900">${Number(order.total_amount).toFixed(2)}</td>

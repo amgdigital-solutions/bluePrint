@@ -87,9 +87,20 @@ CREATE TABLE IF NOT EXISTS orders (
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS binding_fee numeric(10, 2) NOT NULL DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount numeric(10, 2) NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_group_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status text NOT NULL DEFAULT 'unpaid';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS square_order_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS square_payment_link_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS square_payment_url text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS square_payment_id text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS paid_at timestamptz;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS confirmation_email_sent_at timestamptz;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS files_deleted_at timestamptz;
 
 CREATE INDEX IF NOT EXISTS orders_user_id_created_at_idx ON orders (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_status_created_at_idx ON orders (status, created_at DESC);
+CREATE INDEX IF NOT EXISTS orders_group_id_idx ON orders (order_group_id);
+CREATE INDEX IF NOT EXISTS orders_square_order_id_idx ON orders (square_order_id);
 
 CREATE TABLE IF NOT EXISTS order_files (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -104,6 +115,7 @@ CREATE TABLE IF NOT EXISTS order_files (
 );
 
 CREATE INDEX IF NOT EXISTS order_files_order_id_idx ON order_files (order_id, created_at);
+CREATE INDEX IF NOT EXISTS order_files_created_at_idx ON order_files (created_at);
 
 CREATE TABLE IF NOT EXISTS order_status_history (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

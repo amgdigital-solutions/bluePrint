@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { get } from "@vercel/blob";
 import { sql } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
+import { deleteOrderFiles } from "@/lib/order-files";
 
 export const runtime = "nodejs";
 
@@ -35,4 +36,21 @@ export async function GET(request: Request, context: { params: { id: string } })
       "Cache-Control": "private, no-store",
     },
   });
+}
+
+export async function DELETE(request: Request, context: { params: { id: string } }) {
+  const session = await getSessionFromRequest(request);
+  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  if (session.role !== "admin") return NextResponse.json({ error: "Admin access required." }, { status: 403 });
+  if (!sql) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
+
+  const rows = await sql`SELECT id FROM orders WHERE id = ${context.params.id} LIMIT 1`;
+  if (!rows[0]) return NextResponse.json({ error: "Order not found." }, { status: 404 });
+  try {
+    const deletedCount = await deleteOrderFiles(context.params.id);
+    return NextResponse.json({ deletedCount });
+  } catch (error) {
+    console.error("Order file deletion failed", error);
+    return NextResponse.json({ error: "Unable to delete the order files right now." }, { status: 500 });
+  }
 }
