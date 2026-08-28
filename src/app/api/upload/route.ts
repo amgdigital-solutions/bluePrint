@@ -13,10 +13,11 @@ export async function POST(request: Request) {
   const body = await request.json();
   const pathname = typeof body.pathname === "string" ? body.pathname : "";
 
-  if (!session && !pathname.startsWith("orders/guest/")) {
+  const isGuestPath = pathname.startsWith("orders/guest/");
+  if (!session && !isGuestPath) {
     return NextResponse.json({ error: "Authentication required for file uploads." }, { status: 401 });
   }
-  if (session && !pathname.startsWith(`orders/${session.userId}/`)) {
+  if (session && !isGuestPath && !pathname.startsWith(`orders/${session.userId}/`)) {
     return NextResponse.json({ error: "Invalid upload path." }, { status: 403 });
   }
 
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     request,
     onBeforeGenerateToken: async (pathname) => {
       const isUserUpload = Boolean(session && pathname.startsWith(`orders/${session.userId}/`));
-      const isGuestUpload = !session && pathname.startsWith("orders/guest/");
+      const isGuestUpload = pathname.startsWith("orders/guest/");
       if (!isUserUpload && !isGuestUpload) throw new Error("Invalid upload path.");
 
       return {
