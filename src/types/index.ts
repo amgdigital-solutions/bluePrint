@@ -25,6 +25,8 @@ export interface Order {
   unit_price: number;
   total_amount: number;
   delivery_fee: number;
+  binding_fee: number;
+  tax_amount: number;
   delivery_type: "pickup" | "delivery" | "construction_site" | null;
   delivery_address: string | null;
   distance_miles: number | null;

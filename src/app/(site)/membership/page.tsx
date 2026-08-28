@@ -7,9 +7,9 @@ import Footer from "@/components/layout/Footer";
 import { Crown, Zap, Truck, Clock, Shield, Printer, AlertTriangle, MapPin, UserRound } from "lucide-react";
 
 const plans = [
-  { name: "Monthly Club", tier: "monthly", price: 39, period: "month", detail: "First month free · 6-month commitment", popular: false },
-  { name: "6-Month Club", tier: "6month", price: 37.50, period: "month", detail: "$225 total · billed every 6 months", popular: true },
-  { name: "Annual Club", tier: "yearly", price: 36.25, period: "month", detail: "$435 total · billed annually", popular: false },
+  { name: "1 Month Blueprints Club Subscription", tier: "monthly", price: 39, period: "month", detail: "First month free · 6-month commitment", popular: false },
+  { name: "6 Months Blueprints Club Subscription", tier: "6month", price: 37.50, period: "month", detail: "$225 total · billed every 6 months", popular: true },
+  { name: "12 Months Blueprints Club Subscription", tier: "yearly", price: 36.25, period: "month", detail: "$435 total · billed annually", popular: false },
 ];
 
 const benefits = [
@@ -145,7 +145,7 @@ export default function MembershipPage() {
                       : "btn-primary"
                   } ${isLoading && selectedPlan === plan.name ? "opacity-70 cursor-wait" : ""}`}
                 >
-                  {isLoading && selectedPlan === plan.name ? "Processing..." : `Choose ${plan.name}`}
+                  {isLoading && selectedPlan === plan.name ? "Processing..." : "Choose this plan"}
                 </button>
               </div>
             ))}

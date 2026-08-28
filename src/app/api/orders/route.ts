@@ -5,6 +5,7 @@ import { getSessionFromRequest } from "@/lib/auth";
 export const runtime = "nodejs";
 
 const prices = { bw: { regular: 2.99, member: 1.99 }, color: { regular: 6.95, member: 5.95 } } as const;
+const taxRate = Number(process.env.SALES_TAX_RATE || 0);
 const statuses = ["pending", "processing", "printing", "ready", "delivered", "cancelled"] as const;
 
 function isPrintType(value: unknown): value is keyof typeof prices {
@@ -62,6 +63,7 @@ export async function POST(request: Request) {
     const distanceMiles = body.distanceMiles == null ? null : Number(body.distanceMiles);
     const deliveryChoice = body.deliveryChoice === "delivery" ? "delivery" : "pickup";
     const alternateDeliveryAddress = body.alternateDeliveryAddress === true;
+    const bindingRequested = body.bindingRequested === true;
     const printConsentAccepted = body.printConsentAccepted === true;
 
     if (!printConsentAccepted) {
@@ -107,6 +109,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: isMember ? "Member delivery requires a $50+ order within 10 miles." : "Delivery requires an address within 10 miles." }, { status: 400 });
     }
     const deliveryFee = deliveryChoice === "delivery" && (!isMember || alternateDeliveryAddress) ? 15 : 0;
+    const bindingSets = bindingRequested ? normalizedFiles.reduce((sum: number, file: { pageCount: number; sets: number }) => sum + (file.pageCount > 1 ? file.sets : 0), 0) : 0;
+    const bindingFee = Number((bindingSets * 1.99).toFixed(2));
+    const preTaxTotal = Number((cartSubtotal + deliveryFee + bindingFee).toFixed(2));
+    const taxAmount = Number((preTaxTotal * (taxRate / 100)).toFixed(2));
     const deliveryType = deliveryChoice === "delivery" ? "delivery" : "pickup";
     const orderNumberBase = `ORD-${Date.now().toString(36).toUpperCase()}`;
     const customerNotes = typeof body.notes === "string" ? body.notes.trim() : "";
@@ -118,16 +124,17 @@ export async function POST(request: Request) {
       const quantity = item.quantity;
       const unitPrice = isMember ? prices[printType].member : prices[printType].regular;
       const subtotal = Number((unitPrice * quantity).toFixed(2));
-      const totalAmount = Number((subtotal + (normalizedItems[0] === item ? deliveryFee : 0)).toFixed(2));
+      const isFirstItem = normalizedItems[0] === item;
+      const totalAmount = Number((subtotal + (isFirstItem ? deliveryFee + bindingFee + taxAmount : 0)).toFixed(2));
       const rows = await sql`
         INSERT INTO orders (
         order_number, user_id, customer_name, customer_email, customer_phone,
-        print_type, quantity, unit_price, total_amount, delivery_fee,
+        print_type, quantity, unit_price, total_amount, delivery_fee, binding_fee, tax_amount,
         delivery_type, delivery_address, distance_miles, is_construction_site,
         file_url, file_name, notes
         ) VALUES (
         ${normalizedItems.length > 1 ? `${orderNumberBase}-${index + 1}` : orderNumberBase}, ${session?.userId || null}, ${customerName}, ${customerEmail}, ${customerPhone},
-        ${printType}, ${quantity}, ${unitPrice}, ${totalAmount}, ${normalizedItems[0] === item ? deliveryFee : 0},
+        ${printType}, ${quantity}, ${unitPrice}, ${totalAmount}, ${isFirstItem ? deliveryFee : 0}, ${isFirstItem ? bindingFee : 0}, ${isFirstItem ? taxAmount : 0},
         ${deliveryType}, ${deliveryAddress}, ${distanceMiles}, ${isConstructionSite},
         ${normalizedFiles.find((file: { printType: unknown }) => file.printType === printType)?.fileUrl || legacyFileUrl}, ${normalizedFiles.find((file: { printType: unknown }) => file.printType === printType)?.fileName || legacyFileName}, ${notes}
       )

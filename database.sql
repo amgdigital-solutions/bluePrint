@@ -72,6 +72,8 @@ CREATE TABLE IF NOT EXISTS orders (
   unit_price numeric(10, 2) NOT NULL CHECK (unit_price >= 0),
   total_amount numeric(10, 2) NOT NULL CHECK (total_amount >= 0),
   delivery_fee numeric(10, 2) NOT NULL DEFAULT 0 CHECK (delivery_fee >= 0),
+  binding_fee numeric(10, 2) NOT NULL DEFAULT 0 CHECK (binding_fee >= 0),
+  tax_amount numeric(10, 2) NOT NULL DEFAULT 0 CHECK (tax_amount >= 0),
   delivery_type delivery_type,
   delivery_address text,
   distance_miles numeric(8, 2) CHECK (distance_miles >= 0),
@@ -82,6 +84,9 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS binding_fee numeric(10, 2) NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tax_amount numeric(10, 2) NOT NULL DEFAULT 0;
 
 CREATE INDEX IF NOT EXISTS orders_user_id_created_at_idx ON orders (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS orders_status_created_at_idx ON orders (status, created_at DESC);
