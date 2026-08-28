@@ -11,7 +11,11 @@ const allowedContentTypes = [
 export async function POST(request: Request) {
   const session = await getSessionFromRequest(request);
   const body = await request.json();
-  const pathname = typeof body.pathname === "string" ? body.pathname : "";
+  const pathname = typeof body?.payload?.pathname === "string"
+    ? body.payload.pathname
+    : typeof body?.pathname === "string"
+      ? body.pathname
+      : "";
 
   const isGuestPath = pathname.startsWith("orders/guest/");
   if (!session && !isGuestPath) {
