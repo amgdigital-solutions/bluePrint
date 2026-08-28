@@ -118,6 +118,22 @@ ALTER TABLE order_status_history ADD COLUMN IF NOT EXISTS previous_status order_
 ALTER TABLE order_status_history ADD COLUMN IF NOT EXISTS new_status order_status;
 ALTER TABLE order_status_history ADD COLUMN IF NOT EXISTS changed_by uuid REFERENCES profiles(id) ON DELETE SET NULL;
 
+-- The original prototype used a required text `status` column. New status
+-- history rows use `previous_status` and `new_status`, so keep the legacy
+-- column nullable when upgrading an existing database.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'order_status_history'
+      AND column_name = 'status'
+  ) THEN
+    ALTER TABLE order_status_history ALTER COLUMN status DROP NOT NULL;
+  END IF;
+END $$;
+
 CREATE INDEX IF NOT EXISTS order_status_history_order_id_idx ON order_status_history (order_id, created_at DESC);
 
 CREATE TABLE IF NOT EXISTS subscriptions (
