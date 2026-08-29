@@ -178,6 +178,8 @@ CREATE TABLE IF NOT EXISTS quote_requests (
 );
 
 ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS updated_at timestamptz DEFAULT now();
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS sample_name text;
+ALTER TABLE quote_requests ADD COLUMN IF NOT EXISTS sample_image text;
 
 CREATE INDEX IF NOT EXISTS quote_requests_status_created_at_idx ON quote_requests (status, created_at DESC);
 
