@@ -37,6 +37,8 @@ export default function CheckoutClient({ applicationId, locationId, environment 
       if (current.payment_status === "paid") { setComplete(true); return; }
       if (!window.Square || !applicationId || !locationId) throw new Error("Secure payment is not configured. Please contact Blueprints Club.");
       const clean = (value: string) => value.trim().replace(/^(["'])(.*)\1$/, "$2").trim();
+      setLoading(false);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
       const nextCard = await window.Square.payments(clean(applicationId), clean(locationId)).card();
       await nextCard.attach("#card-container");
       setCard(nextCard);
