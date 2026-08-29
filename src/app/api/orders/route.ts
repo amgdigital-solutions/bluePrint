@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSessionFromRequest } from "@/lib/auth";
+import { createOrderCheckoutToken, getSessionFromRequest } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -152,7 +152,8 @@ export async function POST(request: Request) {
     }
 
     const paymentTotal = Number(orders.reduce((sum, order) => sum + Number(order.total_amount), 0).toFixed(2));
-    return NextResponse.json({ order: orders[0], orders, checkoutUrl: `/checkout?orderId=${encodeURIComponent(String(orders[0].id))}`, orderReference: orderNumberBase, paymentTotal }, { status: 201 });
+    const checkoutToken = await createOrderCheckoutToken(String(orders[0].id), orderNumberBase);
+    return NextResponse.json({ order: orders[0], orders, checkoutUrl: `/checkout?orderId=${encodeURIComponent(String(orders[0].id))}&token=${encodeURIComponent(checkoutToken)}`, orderReference: orderNumberBase, paymentTotal }, { status: 201 });
   } catch (error) {
     console.error("Order creation failed", error);
     return NextResponse.json({ error: "Unable to submit your order right now." }, { status: 500 });

@@ -1,27 +1,33 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest, verifyOrderCheckoutToken } from "@/lib/auth";
 
 export const runtime = "nodejs";
 const allowedStatuses = new Set(["pending", "processing", "printing", "ready", "delivered", "cancelled"]);
 
 export async function GET(request: Request, context: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
-  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
+  const checkoutToken = new URL(request.url).searchParams.get("token");
+  if (!session && !checkoutToken) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!sql) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
 
-  const rows = await sql`
+  const rows = session ? await sql`
     SELECT o.*, COALESCE((SELECT json_agg(of ORDER BY of.created_at) FROM order_files of WHERE of.order_id = o.id), '[]'::json) AS files
     FROM orders o
     WHERE o.id = ${context.params.id}
       AND (${session.role === "admin"} OR o.user_id = ${session.userId})
     LIMIT 1
-  `;
-  if (!rows[0]) return NextResponse.json({ error: "Order not found." }, { status: 404 });
+  ` : [];
+  let order = rows[0];
+  if (!order && checkoutToken) {
+    const guestRows = await sql`SELECT * FROM orders WHERE id = ${context.params.id} LIMIT 1`;
+    if (guestRows[0] && await verifyOrderCheckoutToken(checkoutToken, String(context.params.id), String(guestRows[0].order_group_id))) order = guestRows[0];
+  }
+  if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
   const orders = await sql`
-    SELECT * FROM orders WHERE order_group_id = ${rows[0].order_group_id} ORDER BY created_at ASC
+    SELECT * FROM orders WHERE order_group_id = ${order.order_group_id} ORDER BY created_at ASC
   `;
-  return NextResponse.json({ order: rows[0], orders });
+  return NextResponse.json({ order, orders });
 }
 
 export async function PATCH(request: Request, context: { params: { id: string } }) {

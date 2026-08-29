@@ -20,7 +20,9 @@ export default function CheckoutClient({ applicationId, locationId, environment 
   const [complete, setComplete] = useState(false);
 
   useEffect(() => {
-    const orderId = new URLSearchParams(window.location.search).get("orderId");
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("orderId");
+    const checkoutToken = params.get("token");
     if (!orderId) { setError("This checkout link is missing its order reference."); setLoading(false); return; }
     const loadSquare = new Promise<void>((resolve, reject) => {
       if (window.Square) { resolve(); return; }
@@ -28,7 +30,7 @@ export default function CheckoutClient({ applicationId, locationId, environment 
       script.src = environment === "production" ? "https://web.squarecdn.com/v1/square.js" : "https://sandbox.web.squarecdn.com/v1/square.js";
       script.onload = () => resolve(); script.onerror = () => reject(new Error("Secure payment could not be loaded.")); document.head.appendChild(script);
     });
-    Promise.all([fetch(`/api/orders/${encodeURIComponent(orderId)}`).then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error || "Unable to load order."); return result; }), loadSquare]).then(async ([result]) => {
+    Promise.all([fetch(`/api/orders/${encodeURIComponent(orderId)}${checkoutToken ? `?token=${encodeURIComponent(checkoutToken)}` : ""}`).then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error || "Unable to load order."); return result; }), loadSquare]).then(async ([result]) => {
       const current = result.order as Order;
       setOrder(current);
       setTotal(result.orders.reduce((sum: number, item: Order) => sum + Number(item.total_amount), 0));
@@ -47,7 +49,8 @@ export default function CheckoutClient({ applicationId, locationId, environment 
     try {
       const tokenResult = await card.tokenize();
       if (tokenResult.status !== "OK" || !tokenResult.token) throw new Error(tokenResult.errors?.[0]?.message || "Please check your card details.");
-      const response = await fetch(`/api/orders/${encodeURIComponent(order.id)}/pay`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sourceId: tokenResult.token }) });
+      const checkoutToken = new URLSearchParams(window.location.search).get("token");
+      const response = await fetch(`/api/orders/${encodeURIComponent(order.id)}/pay`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sourceId: tokenResult.token, checkoutToken }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Payment could not be completed.");
       if (!result.paid) throw new Error("Payment is still being confirmed. Please contact Blueprints Club if the amount was charged.");

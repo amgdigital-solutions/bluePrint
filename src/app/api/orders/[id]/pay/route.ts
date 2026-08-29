@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { getSessionFromRequest } from "@/lib/auth";
+import { getSessionFromRequest, verifyOrderCheckoutToken } from "@/lib/auth";
 import { createSquarePayment } from "@/lib/square";
 import { sendPaidOrderEmails } from "@/lib/email";
 
@@ -8,21 +8,26 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request, context: { params: { id: string } }) {
   const session = await getSessionFromRequest(request);
-  if (!session) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!sql) return NextResponse.json({ error: "Database is not configured." }, { status: 503 });
 
   try {
     const body = await request.json();
     const sourceId = typeof body.sourceId === "string" ? body.sourceId.trim() : "";
+    const checkoutToken = typeof body.checkoutToken === "string" ? body.checkoutToken : null;
+    if (!session && !checkoutToken) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
     if (!sourceId) return NextResponse.json({ error: "Secure card details are required." }, { status: 400 });
 
-    const rows = await sql`
+    const rows = session ? await sql`
       SELECT * FROM orders
       WHERE id = ${context.params.id}
         AND (${session.role === "admin"} OR user_id = ${session.userId})
       LIMIT 1
-    `;
-    const order = rows[0];
+    ` : [];
+    let order = rows[0];
+    if (!order && checkoutToken) {
+      const guestRows = await sql`SELECT * FROM orders WHERE id = ${context.params.id} LIMIT 1`;
+      if (guestRows[0] && await verifyOrderCheckoutToken(checkoutToken, String(context.params.id), String(guestRows[0].order_group_id))) order = guestRows[0];
+    }
     if (!order) return NextResponse.json({ error: "Order not found." }, { status: 404 });
     if (order.payment_status === "paid") return NextResponse.json({ paid: true, orderReference: order.order_group_id });
 

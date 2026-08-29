@@ -57,6 +57,25 @@ export async function getSessionFromRequest(request: Request) {
   return verifySessionToken(token);
 }
 
+export async function createOrderCheckoutToken(orderId: string, orderGroupId: string) {
+  return new SignJWT({ orderId, orderGroupId, purpose: "order-checkout" })
+    .setProtectedHeader({ alg: "HS256" })
+    .setSubject("order-checkout")
+    .setIssuedAt()
+    .setExpirationTime("24h")
+    .sign(getSecret());
+}
+
+export async function verifyOrderCheckoutToken(token: string | null, orderId: string, orderGroupId?: string) {
+  if (!token) return false;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    return payload.sub === "order-checkout" && payload.purpose === "order-checkout" && payload.orderId === orderId && (!orderGroupId || payload.orderGroupId === orderGroupId);
+  } catch {
+    return false;
+  }
+}
+
 export const sessionCookieOptions = (rememberMe = true) => ({
   httpOnly: true,
   sameSite: "lax" as const,
