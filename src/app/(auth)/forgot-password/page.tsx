@@ -7,10 +7,18 @@ import { ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setLoading(true); setError("");
+    try {
+      const response = await fetch("/api/auth/forgot-password", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to request a reset link.");
+      setSubmitted(true);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to request a reset link."); } finally { setLoading(false); }
   };
 
   return (
@@ -34,9 +42,10 @@ export default function ForgotPasswordPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
                 <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-blueprint-500 transition-colors" placeholder="you@company.com" />
               </div>
-              <button type="submit" className="w-full btn-primary py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+              {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+              <button type="submit" disabled={loading} className="w-full btn-primary py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-60">
                 <Mail className="w-5 h-5" />
-                Send Reset Link
+                {loading ? "Sending..." : "Send Reset Link"}
               </button>
             </form>
           )}
