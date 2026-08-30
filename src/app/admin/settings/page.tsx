@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Save, CheckCircle2, Store, Truck, DollarSign } from "lucide-react";
 
 export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [settings, setSettings] = useState({
     businessName: "Blueprints Club",
     address: "5001 S Dixie Hwy, West Palm Beach, FL 33405",
@@ -20,11 +22,8 @@ export default function AdminSettingsPage() {
     digitizingPrice: "1.99",
   });
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
-  };
+  useEffect(() => { fetch("/api/settings").then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error); const s = result.settings || {}; setSettings((current) => ({ ...current, businessName: s.business_name || current.businessName, address: s.business_address || current.address, phone: s.business_phone || current.phone, email: s.business_email || current.email, deliveryRadius: s.delivery_radius_miles || current.deliveryRadius, minOrderDelivery: s.min_order_delivery || current.minOrderDelivery, constructionFee: s.construction_site_fee || current.constructionFee, bwPrice: s.bw_price || current.bwPrice, bwMemberPrice: s.bw_member_price || current.bwMemberPrice, colorPrice: s.color_price || current.colorPrice, colorMemberPrice: s.color_member_price || current.colorMemberPrice, digitizingPrice: s.digitizing_price || current.digitizingPrice })); }).catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load settings.")).finally(() => setLoading(false)); }, []);
+  const handleSave = async (e: React.FormEvent) => { e.preventDefault(); setError(""); setSaved(false); const response = await fetch("/api/settings", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ settings: { business_name: settings.businessName, business_address: settings.address, business_phone: settings.phone, business_email: settings.email, delivery_radius_miles: settings.deliveryRadius, min_order_delivery: settings.minOrderDelivery, construction_site_fee: settings.constructionFee, bw_price: settings.bwPrice, bw_member_price: settings.bwMemberPrice, color_price: settings.colorPrice, color_member_price: settings.colorMemberPrice, digitizing_price: settings.digitizingPrice } }) }); const result = await response.json(); if (!response.ok) { setError(result.error || "Unable to save settings."); return; } setSaved(true); setTimeout(() => setSaved(false), 3000); };
 
   return (
     <div className="space-y-6">
@@ -34,6 +33,8 @@ export default function AdminSettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
+        {loading && <div className="bg-blueprint-50 border border-blueprint-100 text-blueprint-700 px-4 py-3 rounded-lg text-sm">Loading saved settings...</div>}
+        {error && <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">{error}</div>}
         {saved && (
           <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" />

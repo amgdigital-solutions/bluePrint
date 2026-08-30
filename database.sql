@@ -72,6 +72,20 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
 
 CREATE INDEX IF NOT EXISTS password_reset_tokens_user_id_idx ON password_reset_tokens (user_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS business_settings (
+  setting_key text PRIMARY KEY,
+  setting_value text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO business_settings (setting_key, setting_value) VALUES
+  ('business_name', 'Blueprints Club'), ('business_address', '5001 S Dixie Hwy, West Palm Beach, FL 33405'),
+  ('business_phone', '+1 561-804-9110'), ('business_email', 'info@blueprintsclub.com'),
+  ('delivery_radius_miles', '10'), ('min_order_delivery', '50'), ('construction_site_fee', '15'),
+  ('bw_price', '2.99'), ('bw_member_price', '1.99'), ('color_price', '6.95'),
+  ('color_member_price', '5.95'), ('digitizing_price', '1.99')
+ON CONFLICT (setting_key) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS orders (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   order_number text NOT NULL UNIQUE,
