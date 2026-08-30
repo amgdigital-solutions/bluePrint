@@ -109,7 +109,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: isMember ? "Member delivery requires a $50+ order within 10 miles." : "Delivery requires an address within 10 miles." }, { status: 400 });
     }
     const deliveryFee = deliveryChoice === "delivery" && (!isMember || alternateDeliveryAddress) ? 15 : 0;
-    const bindingSets = bindingRequested ? normalizedFiles.reduce((sum: number, file: { pageCount: number; sets: number }) => sum + (file.pageCount > 1 ? file.sets : 0), 0) : 0;
+    const totalPages = normalizedFiles.reduce((sum: number, file: { pageCount: number; sets: number }) => sum + file.pageCount * file.sets, 0);
+    const bindingSets = bindingRequested && totalPages > 1 ? normalizedFiles.reduce((sum: number, file: { sets: number }) => sum + file.sets, 0) : 0;
     const bindingFee = Number((bindingSets * 1.99).toFixed(2));
     const preTaxTotal = Number((cartSubtotal + deliveryFee + bindingFee).toFixed(2));
     const taxAmount = Number((preTaxTotal * (taxRate / 100)).toFixed(2));

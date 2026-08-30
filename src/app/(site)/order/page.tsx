@@ -57,7 +57,8 @@ export default function OrderPage() {
   const subtotal = Number(checkoutCart.reduce((sum, item) => sum + item.quantity * priceFor(item.printType), 0).toFixed(2));
   const deliveryFee = delivery === "delivery" && (!member || addressMode === "alternate") ? 15 : 0;
   const [bindingRequested, setBindingRequested] = useState(true);
-  const bindingSets = files.filter((file) => file.pageCount > 1).reduce((sum, file) => sum + file.sets, 0);
+  const totalPages = files.reduce((sum, file) => sum + file.pageCount * file.sets, 0);
+  const bindingSets = totalPages > 1 ? files.reduce((sum, file) => sum + file.sets, 0) : 0;
   const bindingFee = bindingRequested ? Number((bindingSets * 1.99).toFixed(2)) : 0;
   const taxableTotal = Number((subtotal + deliveryFee + bindingFee).toFixed(2));
   const taxAmount = Number((taxableTotal * (taxRate / 100)).toFixed(2));
