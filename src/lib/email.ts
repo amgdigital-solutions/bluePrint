@@ -16,6 +16,16 @@ type QuoteRequestEmail = {
   details?: string | null;
 };
 
+export async function sendPasswordResetEmail(input: { name: string; email: string; resetUrl: string }) {
+  const name = escapeHtml(input.name);
+  await sendEmail({
+    to: input.email,
+    subject: "Reset your Blueprints Club password",
+    idempotencyKey: `password-reset-${input.email}-${input.resetUrl.split("token=")[1] || "request"}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#172033;border:1px solid #dbe5f4;border-radius:18px;overflow:hidden"><div style="background:#17245f;padding:28px;color:#fff"><div style="font-size:22px;font-weight:700;letter-spacing:.04em">BLUEPRINTS CLUB</div><div style="color:#b9ccff;margin-top:6px">Secure account support</div></div><div style="padding:30px"><h1 style="color:#1746b0;margin-top:0">Reset your password</h1><p>Hello ${name},</p><p>We received a request to reset your Blueprints Club password. This link expires in one hour and can only be used once.</p><p><a href="${escapeHtml(input.resetUrl)}" style="display:inline-block;background:#1746b0;color:#fff;padding:13px 20px;border-radius:8px;text-decoration:none;font-weight:700">Reset password</a></p><p style="color:#667085;font-size:13px">If you did not request this, you can safely ignore this email.</p></div></div>`,
+  });
+}
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;",

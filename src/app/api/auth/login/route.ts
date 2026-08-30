@@ -16,13 +16,13 @@ export async function POST(request: Request) {
     if (!email || !password) return NextResponse.json({ error: "Email and password are required." }, { status: 400 });
 
     const rows = await sql`
-      SELECT id, email, password_hash, full_name, role
+      SELECT id, email, password_hash, full_name, role, is_active
       FROM profiles
       WHERE lower(email) = ${email}
       LIMIT 1
     `;
-    const user = rows[0] as { id: string; email: string; password_hash: string; full_name: string; role: "user" | "admin" } | undefined;
-    if (!user || !user.password_hash || !(await compare(password, user.password_hash))) {
+    const user = rows[0] as { id: string; email: string; password_hash: string; full_name: string; role: "user" | "admin"; is_active: boolean } | undefined;
+    if (!user || user.is_active === false || !user.password_hash || !(await compare(password, user.password_hash))) {
       return NextResponse.json({ error: "Invalid email or password." }, { status: 401 });
     }
 
