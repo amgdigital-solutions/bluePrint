@@ -6,6 +6,9 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Crown, Zap, Truck, Clock, Shield, Printer, AlertTriangle, MapPin, UserRound } from "lucide-react";
 
+type SquareCard = { attach: (selector: string) => Promise<void>; tokenize: (options?: { intent?: string }) => Promise<{ status: string; token?: string; errors?: Array<{ message?: string }> }> };
+type SquarePayments = { card: () => Promise<SquareCard> };
+
 const plans = [
   { name: "1 Month Blueprints Club Subscription", tier: "monthly", price: 39, period: "month", detail: "First month free · then 6 paid monthly periods", popular: false },
   { name: "6 Months Blueprints Club Subscription", tier: "6month", price: 37.50, period: "month", detail: "$225 total · billed every 6 months", popular: true },
@@ -30,10 +33,35 @@ export default function MembershipPage() {
   const [addressChecking, setAddressChecking] = useState(false);
   const [memberForm, setMemberForm] = useState({ fullName: "", phone: "", company: "", address: "" });
   const [profileEmail, setProfileEmail] = useState("");
+  const [membershipCard, setMembershipCard] = useState<SquareCard | null>(null);
+  const [cardError, setCardError] = useState("");
 
   useEffect(() => {
     fetch("/api/profile").then(async (response) => { if (!response.ok) return; const result = await response.json(); setProfileEmail(result.profile.email || ""); setMemberForm({ fullName: result.profile.full_name || "", phone: result.profile.phone || "", company: result.profile.company || "", address: result.profile.address || "" }); }).catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (!profileEmail) return;
+    let cancelled = false;
+    async function setupCard() {
+      try {
+        const configResponse = await fetch("/api/square/config");
+        const config = await configResponse.json();
+        if (!configResponse.ok) throw new Error(config.error || "Square card setup is incomplete.");
+        if (!window.Square) {
+          const script = document.createElement("script");
+          script.src = config.environment === "production" ? "https://web.squarecdn.com/v1/square.js" : "https://sandbox.web.squarecdn.com/v1/square.js";
+          await new Promise<void>((resolve, reject) => { script.onload = () => resolve(); script.onerror = () => reject(new Error("Secure card form could not be loaded.")); document.head.appendChild(script); });
+        }
+        if (!window.Square || cancelled) return;
+        const card = await window.Square.payments(config.applicationId, config.locationId).card();
+        await card.attach("#membership-card-container");
+        if (!cancelled) setMembershipCard(card);
+      } catch (reason) { if (!cancelled) setCardError(reason instanceof Error ? reason.message : "Unable to load the secure card form."); }
+    }
+    void setupCard();
+    return () => { cancelled = true; };
+  }, [profileEmail]);
 
   const validateMemberAddress = async () => {
     if (!memberForm.address.trim()) { setNotice("Please enter your delivery address first."); return false; }
@@ -66,16 +94,23 @@ export default function MembershipPage() {
       setIsLoading(false);
       return;
     }
+    if (!membershipCard) {
+      setNotice("Please enter your card details before continuing.");
+      setIsLoading(false);
+      return;
+    }
     if (!profileEmail) {
       setNotice("Please sign in before joining the Club so we can connect the Square subscription to your account.");
       setIsLoading(false);
       return;
     }
     try {
+      const tokenResult = await membershipCard.tokenize({ intent: "STORE" });
+      if (tokenResult.status !== "OK" || !tokenResult.token) throw new Error(tokenResult.errors?.[0]?.message || "Please check your card details.");
       const profileResponse = await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fullName: memberForm.fullName, email: profileEmail, phone: memberForm.phone, company: memberForm.company, address: memberForm.address }) });
       const profileResult = await profileResponse.json();
       if (!profileResponse.ok) throw new Error(profileResult.error || "Unable to save your membership details.");
-      const subscriptionResponse = await fetch("/api/membership/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tier: plan.tier }) });
+      const subscriptionResponse = await fetch("/api/membership/subscribe", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tier: plan.tier, sourceId: tokenResult.token }) });
       const subscriptionResult = await subscriptionResponse.json();
       if (!subscriptionResponse.ok) throw new Error(subscriptionResult.error || "Unable to start your membership.");
       setNotice(subscriptionResult.message || "Membership started. Check your email for the Square invoice.");
@@ -109,6 +144,8 @@ export default function MembershipPage() {
           )}
 
           {/* Pricing Cards */}
+          {profileEmail && <section className="max-w-3xl mx-auto mb-10 rounded-3xl bg-white border border-gray-200 p-7 sm:p-9 shadow-sm"><div className="flex items-start gap-4"><div className="w-11 h-11 rounded-xl bg-blueprint-100 flex items-center justify-center flex-shrink-0"><Shield className="w-5 h-5 text-blueprint-700" /></div><div className="flex-1"><h2 className="font-display text-2xl font-bold text-gray-900">Secure payment method</h2><p className="text-sm text-gray-500 mt-1">Enter your card once. Square stores it securely and charges it only after the complimentary first month.</p><div id="membership-card-container" className="mt-5 min-h-28 rounded-xl border border-gray-200 p-3" />{cardError && <p role="alert" className="mt-3 text-sm text-red-700">{cardError}</p>}<p className="text-xs text-gray-500 mt-3">No membership charge is taken today. Your card is saved for the subscription billing schedule.</p></div></div></section>}
+
           <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">
             {plans.map((plan, idx) => (
               <div

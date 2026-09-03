@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { sql } from "@/lib/db";
 import { getSessionFromRequest } from "@/lib/auth";
 import { sendMembershipPaymentReminderEmail, sendWelcomeEmail } from "@/lib/email";
@@ -19,10 +20,11 @@ export async function POST(request: Request, { params }: { params: { id: string 
       await sendMembershipPaymentReminderEmail({ name: subscriber.full_name, email: subscriber.email });
       return NextResponse.json({ ok: true, message: `Payment reminder sent to ${subscriber.email}.` });
     }
-    await sendWelcomeEmail({ name: subscriber.full_name, email: subscriber.email });
+    await sendWelcomeEmail({ name: subscriber.full_name, email: subscriber.email, idempotencyKey: `admin-welcome-${randomUUID()}` });
     return NextResponse.json({ ok: true, message: `Welcome email sent to ${subscriber.email}.` });
   } catch (error) {
     console.error("Admin welcome email failed", error);
-    return NextResponse.json({ error: "Unable to send the welcome email. Check the Resend configuration." }, { status: 502 });
+    const detail = error instanceof Error ? error.message : "Unknown Resend error.";
+    return NextResponse.json({ error: detail.startsWith("Resend rejected") ? detail : "Unable to send the welcome email. Check the Resend configuration." }, { status: 502 });
   }
 }

@@ -6,7 +6,7 @@ import { ArrowLeft, CheckCircle2, CreditCard, Loader2, ShieldCheck } from "lucid
 
 type Props = { applicationId: string; locationId: string; environment: "production" | "sandbox" };
 type Order = { id: string; order_number: string; order_group_id: string; customer_name: string; customer_email: string; total_amount: string | number; delivery_type: string | null; payment_status: string };
-type SquareCard = { attach: (selector: string) => Promise<void>; tokenize: () => Promise<{ status: string; token?: string; errors?: Array<{ message?: string }> }> };
+type SquareCard = { attach: (selector: string) => Promise<void>; tokenize: (options?: { intent?: string }) => Promise<{ status: string; token?: string; errors?: Array<{ message?: string }> }> };
 type SquarePayments = { card: () => Promise<SquareCard> };
 declare global { interface Window { Square?: { payments: (applicationId: string, locationId: string) => SquarePayments } } }
 
