@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { Crown, Zap, Truck, Clock, Shield, Printer, AlertTriangle, MapPin, UserRound } from "lucide-react";
 
 const plans = [
-  { name: "1 Month Blueprints Club Subscription", tier: "monthly", price: 39, period: "month", detail: "First month free · 6-month commitment", popular: false },
+  { name: "1 Month Blueprints Club Subscription", tier: "monthly", price: 39, period: "month", detail: "First month free · then 6 paid monthly periods", popular: false },
   { name: "6 Months Blueprints Club Subscription", tier: "6month", price: 37.50, period: "month", detail: "$225 total · billed every 6 months", popular: true },
   { name: "12 Months Blueprints Club Subscription", tier: "yearly", price: 36.25, period: "month", detail: "$435 total · billed annually", popular: false },
 ];
@@ -160,6 +160,15 @@ export default function MembershipPage() {
             {addressDistance !== null && <p className={`text-sm mt-3 ${addressDistance <= 10 ? "text-green-700" : "text-red-700"}`}>{addressDistance <= 10 ? `✓ Eligible address: ${addressDistance} miles from the store.` : `✕ Not eligible: ${addressDistance} miles from the store.`}</p>}
             <p className="text-xs text-gray-500 mt-4">Your saved address is the default delivery address. Delivering to another address later adds a $15 alternate-address fee.</p>
             <div className="mt-5 flex flex-wrap gap-3"><button type="button" onClick={() => router.push("/")} className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100">Cancel / back to home</button><button type="button" onClick={() => router.push("/order")} className="rounded-xl border border-blueprint-200 bg-blueprint-50 px-5 py-2.5 text-sm font-semibold text-blueprint-700 hover:bg-blueprint-100">Order without membership</button></div>
+          </section>
+
+          <section className="max-w-3xl mx-auto mb-20 rounded-3xl bg-blueprint-50 border border-blueprint-100 p-7 sm:p-9">
+            <h2 className="font-display text-2xl font-bold text-gray-900">Membership and cancellation terms</h2>
+            <div className="mt-4 space-y-3 text-sm leading-relaxed text-gray-700">
+              <p>The monthly membership includes one complimentary month. After the introductory month, the monthly plan continues for six paid monthly periods at the selected monthly rate.</p>
+              <p>You may cancel at any time during the complimentary period at no charge. After the complimentary period, cancellation requires one month&apos;s notice for monthly, six-month, and annual memberships. Cancellation does not create a new charge during the notice period beyond the billing terms already agreed for the active plan.</p>
+              <p>Membership benefits remain available while the subscription is active. Square handles subscription billing and sends payment receipts or payment notices to the account email.</p>
+            </div>
           </section>
 
           {/* Benefits Grid */}

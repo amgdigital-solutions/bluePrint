@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Search, Crown, Users, Loader2 } from "lucide-react";
+import { Search, Crown, Users, Loader2, Mail, CreditCard } from "lucide-react";
 
 type Subscriber = { id: string; full_name: string; email: string; phone?: string; membership_tier: "monthly" | "6month" | "yearly" | null; status: string; membership_expires_at: string | null; orders: number };
 
@@ -24,10 +24,35 @@ export default function AdminSubscribersPage() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [remindingId, setRemindingId] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/subscribers").then(async (response) => { const result = await response.json(); if (!response.ok) throw new Error(result.error); setSubscribers(result.subscribers); }).catch((reason) => setError(reason instanceof Error ? reason.message : "Unable to load subscribers.")).finally(() => setLoading(false));
   }, []);
+
+  async function sendWelcomeEmail(id: string) {
+    setSendingId(id); setError(""); setMessage("");
+    try {
+      const response = await fetch(`/api/admin/subscribers/${id}/welcome-email`, { method: "POST" });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to send welcome email.");
+      setMessage(result.message);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to send welcome email."); }
+    finally { setSendingId(null); }
+  }
+
+  async function sendPaymentReminder(id: string) {
+    setRemindingId(id); setError(""); setMessage("");
+    try {
+      const response = await fetch(`/api/admin/subscribers/${id}/welcome-email`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "payment-reminder" }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Unable to send payment reminder.");
+      setMessage(result.message);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to send payment reminder."); }
+    finally { setRemindingId(null); }
+  }
 
   const filtered = subscribers.filter((s) => {
     const matchesSearch = s.full_name.toLowerCase().includes(search.toLowerCase()) || s.email.toLowerCase().includes(search.toLowerCase());
@@ -63,6 +88,7 @@ export default function AdminSubscribersPage() {
           </select>
         </div>
       </div>
+      {message && <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm">{message}</div>}
 
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
@@ -74,6 +100,8 @@ export default function AdminSubscribersPage() {
                 <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Expires</th>
                 <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -105,6 +133,8 @@ export default function AdminSubscribersPage() {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{sub.membership_expires_at ? new Date(sub.membership_expires_at).toLocaleDateString() : "—"}</td>
                   <td className="px-6 py-4 text-right font-semibold text-gray-900">{sub.orders}</td>
+                  <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => sendWelcomeEmail(sub.id)} disabled={sendingId === sub.id || remindingId === sub.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg text-blueprint-700 bg-blueprint-50 hover:bg-blueprint-100 disabled:opacity-60"><Mail className="w-3.5 h-3.5" />{sendingId === sub.id ? "Sending..." : "Welcome"}</button><button onClick={() => sendPaymentReminder(sub.id)} disabled={sendingId === sub.id || remindingId === sub.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-60"><CreditCard className="w-3.5 h-3.5" />{remindingId === sub.id ? "Sending..." : "Payment reminder"}</button></div></td>
+                  <td className="px-6 py-4 text-right"><button onClick={() => sendWelcomeEmail(sub.id)} disabled={sendingId === sub.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg text-blueprint-700 bg-blueprint-50 hover:bg-blueprint-100 disabled:opacity-60"><Mail className="w-3.5 h-3.5" />{sendingId === sub.id ? "Sending..." : "Welcome email"}</button></td>
                 </tr>
               ); })}
             </tbody>

@@ -16,6 +16,26 @@ type QuoteRequestEmail = {
   details?: string | null;
 };
 
+export async function sendWelcomeEmail(input: { name: string; email: string }) {
+  const name = escapeHtml(input.name);
+  await sendEmail({
+    to: input.email,
+    subject: "Welcome to Blueprints Club",
+    idempotencyKey: `welcome-${input.email.trim().toLowerCase()}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#172033;border:1px solid #dbe5f4;border-radius:18px;overflow:hidden"><div style="background:#17245f;padding:30px;color:#fff"><div style="font-size:24px;font-weight:700;letter-spacing:.04em">BLUEPRINTS CLUB</div><div style="color:#b9ccff;margin-top:6px">Engineering · Architectural · Landscaping</div></div><div style="padding:32px"><h1 style="color:#1746b0;margin-top:0">Welcome, ${name}!</h1><p>Thank you for creating your Blueprints Club account. We’re glad to have you with us.</p><p>Your account is ready for professional blueprint printing, convenient pickup, and delivery within our service area.</p><div style="background:#f2f6ff;border-radius:12px;padding:18px;margin:24px 0"><strong>Ready to get started?</strong><br><span style="color:#526071">Sign in to manage your profile and place an order, or explore membership for member pricing and club benefits.</span></div><p><a href="https://www.blueprintsclub.com/dashboard" style="display:inline-block;background:#1746b0;color:#fff;padding:13px 20px;border-radius:8px;text-decoration:none;font-weight:700">Open your account</a></p><p><a href="https://www.blueprintsclub.com/membership" style="color:#1746b0;font-weight:700">Explore membership benefits →</a></p><p>If you need help, our team is available Monday–Friday, 9 AM–5 PM at <a href="tel:+15618049110" style="color:#1746b0">+1 (561) 804-9110</a>.</p><p style="margin-bottom:0"><strong>Blueprints Club</strong><br>5001 S Dixie Hwy<br>West Palm Beach, FL 33405</p></div></div>`,
+  });
+}
+
+export async function sendMembershipPaymentReminderEmail(input: { name: string; email: string }) {
+  const name = escapeHtml(input.name);
+  await sendEmail({
+    to: input.email,
+    subject: "Your Blueprints Club membership payment",
+    idempotencyKey: `membership-payment-reminder-${input.email.trim().toLowerCase()}-${new Date().toISOString().slice(0, 10)}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#172033;border:1px solid #dbe5f4;border-radius:18px;overflow:hidden"><div style="background:#17245f;padding:30px;color:#fff"><div style="font-size:24px;font-weight:700;letter-spacing:.04em">BLUEPRINTS CLUB</div><div style="color:#b9ccff;margin-top:6px">Engineering · Architectural · Landscaping</div></div><div style="padding:32px"><h1 style="color:#1746b0;margin-top:0">Membership payment reminder</h1><p>Hello ${name},</p><p>Your complimentary first month of Blueprints Club membership is coming to an end. Please review your membership payment details so your member benefits continue without interruption.</p><p><a href="https://www.blueprintsclub.com/dashboard" style="display:inline-block;background:#1746b0;color:#fff;padding:13px 20px;border-radius:8px;text-decoration:none;font-weight:700">Open your account</a></p><p>If you have questions, our team is available Monday–Friday, 9 AM–5 PM at <a href="tel:+15618049110" style="color:#1746b0">+1 (561) 804-9110</a>.</p><p style="margin-bottom:0"><strong>Blueprints Club</strong><br>5001 S Dixie Hwy<br>West Palm Beach, FL 33405</p></div></div>`,
+  });
+}
+
 export async function sendPasswordResetEmail(input: { name: string; email: string; resetUrl: string }) {
   const name = escapeHtml(input.name);
   await sendEmail({

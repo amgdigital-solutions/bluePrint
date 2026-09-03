@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
 import { sql } from "@/lib/db";
 import { createSessionToken, AUTH_COOKIE, sessionCookieOptions } from "@/lib/auth";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,9 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json({ user: { id: user.id, email: user.email, name: user.full_name, role: user.role } }, { status: 201 });
     response.cookies.set(AUTH_COOKIE, token, sessionCookieOptions(true));
+    void sendWelcomeEmail({ name: user.full_name, email: user.email }).catch((error) => {
+      console.error("Welcome email failed", error);
+    });
     return response;
   } catch (error) {
     console.error("Registration failed", error);
