@@ -101,7 +101,6 @@ export default function AdminSubscribersPage() {
                 <th className="text-left px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Expires</th>
                 <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Orders</th>
                 <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="text-right px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -134,7 +133,6 @@ export default function AdminSubscribersPage() {
                   <td className="px-6 py-4 text-sm text-gray-600">{sub.membership_expires_at ? new Date(sub.membership_expires_at).toLocaleDateString() : "—"}</td>
                   <td className="px-6 py-4 text-right font-semibold text-gray-900">{sub.orders}</td>
                   <td className="px-6 py-4 text-right"><div className="flex justify-end gap-2"><button onClick={() => sendWelcomeEmail(sub.id)} disabled={sendingId === sub.id || remindingId === sub.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg text-blueprint-700 bg-blueprint-50 hover:bg-blueprint-100 disabled:opacity-60"><Mail className="w-3.5 h-3.5" />{sendingId === sub.id ? "Sending..." : "Welcome"}</button><button onClick={() => sendPaymentReminder(sub.id)} disabled={sendingId === sub.id || remindingId === sub.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg text-amber-700 bg-amber-50 hover:bg-amber-100 disabled:opacity-60"><CreditCard className="w-3.5 h-3.5" />{remindingId === sub.id ? "Sending..." : "Payment reminder"}</button></div></td>
-                  <td className="px-6 py-4 text-right"><button onClick={() => sendWelcomeEmail(sub.id)} disabled={sendingId === sub.id} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg text-blueprint-700 bg-blueprint-50 hover:bg-blueprint-100 disabled:opacity-60"><Mail className="w-3.5 h-3.5" />{sendingId === sub.id ? "Sending..." : "Welcome email"}</button></td>
                 </tr>
               ); })}
             </tbody>

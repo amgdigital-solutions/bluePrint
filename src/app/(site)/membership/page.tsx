@@ -162,7 +162,7 @@ export default function MembershipPage() {
             <div className="mt-5 flex flex-wrap gap-3"><button type="button" onClick={() => router.push("/")} className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-100">Cancel / back to home</button><button type="button" onClick={() => router.push("/order")} className="rounded-xl border border-blueprint-200 bg-blueprint-50 px-5 py-2.5 text-sm font-semibold text-blueprint-700 hover:bg-blueprint-100">Order without membership</button></div>
           </section>
 
-          <section className="max-w-3xl mx-auto mb-20 rounded-3xl bg-blueprint-50 border border-blueprint-100 p-7 sm:p-9">
+          <section id="cancellation-policy" className="max-w-3xl mx-auto mb-20 rounded-3xl bg-blueprint-50 border border-blueprint-100 p-7 sm:p-9">
             <h2 className="font-display text-2xl font-bold text-gray-900">Membership and cancellation terms</h2>
             <div className="mt-4 space-y-3 text-sm leading-relaxed text-gray-700">
               <p>The monthly membership includes one complimentary month. After the introductory month, the monthly plan continues for six paid monthly periods at the selected monthly rate.</p>
