@@ -43,12 +43,12 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20 lg:h-24">
           <Link href="/" className="flex items-center gap-2">
             <Image
-              src="/blueprints-club-logo.png"
+              src="/blueprints-club-logo-transparent.png"
               alt="Blueprints Club"
               width={1280}
               height={320}
               priority
-              className="h-14 w-auto max-w-[250px] object-contain"
+              className="h-16 lg:h-20 w-auto max-w-[300px] object-contain"
             />
           </Link>
 

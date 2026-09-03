@@ -54,7 +54,8 @@ export default function Hero() {
           </div>
 
           <div className="relative hidden lg:block">
-            <div className="relative bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500">
+            <Link href="/membership" aria-label="View member pricing" className="block group">
+            <div className="relative bg-white rounded-2xl shadow-2xl p-6 border border-gray-100 transform rotate-2 group-hover:rotate-0 transition-transform duration-500">
               <div className="relative h-[350px] overflow-hidden rounded-xl mb-4 bg-blueprint-50">
                 <Image
                   src="/samples/engineering-site-plan.png"
@@ -74,13 +75,14 @@ export default function Hero() {
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider">Blueprint 24×36</p>
                   <p className="font-display font-bold text-2xl text-blueprint-800">$1.99</p>
-                  <p className="text-xs text-gray-400">Member Price</p>
+                  <p className="text-xs text-gray-400">Member Pricing</p>
                 </div>
                 <div className="bg-gradient-to-r from-yellow-100 to-amber-100 px-3 py-1.5 rounded-lg">
                   <span className="text-xs font-bold text-yellow-800">MEMBER SAVE 33%</span>
                 </div>
               </div>
             </div>
+            </Link>
             <div className="absolute -bottom-6 -left-6 bg-white rounded-xl shadow-lg p-4 border border-gray-100 transform -rotate-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
