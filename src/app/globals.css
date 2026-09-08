@@ -57,4 +57,13 @@
   .section-divider {
     @apply h-px bg-gradient-to-r from-transparent via-blueprint-200 to-transparent;
   }
+  .bg-blueprint-950 [class~="bg-white/5"] {
+    @apply bg-blueprint-100 border-blueprint-200 text-blueprint-950;
+  }
+  .bg-blueprint-950 [class~="bg-white/5"] strong {
+    @apply text-blueprint-950;
+  }
+  .bg-blueprint-950 [class~="bg-white/5"] span span {
+    @apply text-blueprint-800;
+  }
 }
