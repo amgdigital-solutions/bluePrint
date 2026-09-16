@@ -137,7 +137,7 @@ export default function MembershipPage() {
               <h2 className="font-display text-xl font-bold text-gray-900">New to Blueprints Club?</h2>
               <p className="mt-1 text-sm text-gray-600">Create your free account first. After registration, you&apos;ll return here to select a plan and save your member details.</p>
               <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3">
-                <button onClick={() => router.push("/register?next=/membership")} className="btn-primary rounded-xl px-6 py-3 font-semibold">Create an account</button>
+                <button onClick={() => router.push("/register?next=/membership")} className="btn-primary rounded-xl px-6 py-3 font-semibold shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-blueprint-800 hover:shadow-lg">Create an account</button>
                 <button onClick={() => router.push("/login?next=/membership")} className="rounded-xl border border-blueprint-300 bg-white px-6 py-3 font-semibold text-blueprint-700 hover:bg-blueprint-100">Already have an account? Sign in</button>
               </div>
             </div>
@@ -148,12 +148,15 @@ export default function MembershipPage() {
 
           <div className="grid md:grid-cols-3 gap-8 mb-20 max-w-5xl mx-auto">
             {plans.map((plan, idx) => (
-              <div
+              <button
+                type="button"
                 key={idx}
-                className={`relative rounded-2xl p-8 ${
+                onClick={() => handleSubscribe(plan)}
+                disabled={isLoading}
+                className={`group relative w-full rounded-2xl p-8 text-left transition-all duration-300 disabled:cursor-wait ${
                   plan.popular
-                    ? "bg-gradient-to-br from-blueprint-600 to-blueprint-800 text-white shadow-xl scale-105"
-                    : "bg-white border-2 border-gray-100 hover:border-blueprint-200 transition-all"
+                    ? "bg-gradient-to-br from-blueprint-600 to-blueprint-800 text-white shadow-xl scale-105 hover:from-blueprint-700 hover:to-blueprint-900 hover:shadow-2xl hover:-translate-y-1"
+                    : "bg-white border-2 border-gray-100 text-gray-900 shadow-sm hover:border-blueprint-400 hover:bg-blueprint-50 hover:shadow-xl hover:-translate-y-1"
                 }`}
               >
                 {plan.popular && (
@@ -173,18 +176,16 @@ export default function MembershipPage() {
                   </div>
                   <p className={`mt-3 text-sm ${plan.popular ? "text-blueprint-100" : "text-gray-500"}`}>{plan.detail}</p>
                 </div>
-                <button
-                  onClick={() => handleSubscribe(plan)}
-                  disabled={isLoading}
-                  className={`w-full py-3 rounded-xl font-semibold transition-all ${
+                <span
+                  className={`block w-full py-3 rounded-xl text-center font-semibold transition-all ${
                     plan.popular
                       ? "bg-white text-blueprint-700 hover:bg-blueprint-50"
-                      : "btn-primary"
+                      : "bg-blueprint-600 text-white group-hover:bg-blueprint-700"
                   } ${isLoading && selectedPlan === plan.name ? "opacity-70 cursor-wait" : ""}`}
                 >
                   {isLoading && selectedPlan === plan.name ? "Processing..." : "Choose this plan"}
-                </button>
-              </div>
+                </span>
+              </button>
             ))}
           </div>
 

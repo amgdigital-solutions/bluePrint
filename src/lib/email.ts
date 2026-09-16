@@ -16,6 +16,29 @@ type QuoteRequestEmail = {
   details?: string | null;
 };
 
+type ContactMessageEmail = {
+  customerName: string;
+  customerEmail: string;
+  customerPhone?: string | null;
+  message: string;
+};
+
+export async function sendContactMessageEmail(input: ContactMessageEmail) {
+  const name = escapeHtml(input.customerName);
+  const subjectName = input.customerName.replace(/[\r\n]/g, " ").slice(0, 120);
+  const email = escapeHtml(input.customerEmail);
+  const phone = input.customerPhone ? escapeHtml(input.customerPhone) : "Not provided";
+  const message = escapeHtml(input.message).replace(/\n/g, "<br>");
+
+  await sendEmail({
+    to: ["info@blueprintsclub.com", "dmprintingfl@gmail.com"],
+    subject: `New contact message from ${subjectName}`,
+    idempotencyKey: `contact-${crypto.randomUUID()}`,
+    replyTo: input.customerEmail,
+    html: `<div style="font-family:Arial,sans-serif;max-width:620px;margin:auto;color:#172033;border:1px solid #dbe5f4;border-radius:18px;overflow:hidden"><div style="background:#17245f;padding:28px;color:#fff"><div style="font-size:22px;font-weight:700;letter-spacing:.04em">BLUEPRINTS CLUB</div><div style="color:#b9ccff;margin-top:6px">New website contact message</div></div><div style="padding:30px"><h1 style="color:#1746b0;margin-top:0">New message from ${name}</h1><p><strong>Email:</strong> <a href="mailto:${email}" style="color:#1746b0">${email}</a><br><strong>Phone:</strong> ${phone}</p><p style="white-space:normal"><strong>Message:</strong><br>${message}</p></div></div>`,
+  });
+}
+
 export async function sendWelcomeEmail(input: { name: string; email: string; idempotencyKey?: string }) {
   const name = escapeHtml(input.name);
   await sendEmail({
@@ -56,7 +79,7 @@ function escapeHtml(value: string) {
   }[character] || character));
 }
 
-async function sendEmail(input: { to: string; subject: string; html: string; idempotencyKey: string }) {
+async function sendEmail(input: { to: string | string[]; subject: string; html: string; idempotencyKey: string; replyTo?: string }) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.RESEND_FROM_EMAIL;
   if (!apiKey || !from) throw new Error("Resend email is not configured.");
@@ -68,7 +91,7 @@ async function sendEmail(input: { to: string; subject: string; html: string; ide
       "Content-Type": "application/json",
       "Idempotency-Key": input.idempotencyKey,
     },
-    body: JSON.stringify({ from, to: [input.to], subject: input.subject, html: input.html }),
+    body: JSON.stringify({ from, to: Array.isArray(input.to) ? input.to : [input.to], subject: input.subject, html: input.html, ...(input.replyTo ? { reply_to: input.replyTo } : {}) }),
   });
   const result = await response.json() as { id?: string; message?: string; error?: { message?: string } };
   if (!response.ok) throw new Error(result.error?.message || result.message || "Resend rejected the email.");
