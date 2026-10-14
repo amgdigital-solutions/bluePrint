@@ -41,7 +41,7 @@ export default function AdminOrdersPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Unable to update order status.");
-      setOrders((current) => current.map((order) => (order.id === orderId ? result.order : order)));
+      setOrders((current) => current.map((order) => (order.id === orderId ? { ...order, ...result.order } : order)));
     } catch (updateError) {
       setError(updateError instanceof Error ? updateError.message : "Unable to update order status.");
     }
