@@ -126,6 +126,26 @@ export async function sendPaidOrderEmails(order: PaidOrderEmail) {
   }
 }
 
+export async function sendOrderStatusEmail(input: { orderReference: string; customerName: string; customerEmail: string; status: string; deliveryType?: string | null }) {
+  const labels: Record<string, { label: string; message: string }> = {
+    processing: { label: "Processing", message: "We have started processing your blueprint order." },
+    printing: { label: "Printing", message: "Your blueprint order is now being printed." },
+    ready: { label: "Ready", message: input.deliveryType === "delivery" ? "Your order is complete and being prepared for delivery." : "Your order is ready for pickup at 5001 S Dixie Hwy, West Palm Beach, FL 33405." },
+    delivered: { label: "Delivered", message: "Your order has been marked delivered. Thank you for choosing Blueprints Club." },
+    cancelled: { label: "Cancelled", message: "Your order has been cancelled. Please contact us if you have questions." },
+  };
+  const update = labels[input.status];
+  if (!update) return;
+  const name = escapeHtml(input.customerName || "there");
+  const reference = escapeHtml(input.orderReference);
+  await sendEmail({
+    to: input.customerEmail,
+    subject: `Order ${reference} update — ${update.label}`,
+    idempotencyKey: `order-status-${input.orderReference}-${input.status}`,
+    html: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#172033;border:1px solid #dbe5f4;border-radius:18px;overflow:hidden"><div style="background:#17245f;padding:28px;color:#fff"><div style="font-size:22px;font-weight:700;letter-spacing:.04em">BLUEPRINTS CLUB</div><div style="color:#b9ccff;margin-top:6px">Order status update</div></div><div style="padding:30px"><h1 style="color:#1746b0;margin-top:0">${update.label}</h1><p>Hello ${name},</p><p>${update.message}</p><p><strong>Order:</strong> ${reference}</p><p>You can sign in to view your order history, or contact us Monday–Friday, 9 AM–5 PM at <a href="tel:+15618049110" style="color:#1746b0">+1 (561) 804-9110</a>.</p><p style="margin-bottom:0"><strong>Blueprints Club</strong><br>5001 S Dixie Hwy<br>West Palm Beach, FL 33405</p></div></div>`,
+  });
+}
+
 export async function sendQuoteRequestEmails(quote: QuoteRequestEmail) {
   const name = escapeHtml(quote.customerName);
   const product = escapeHtml(quote.productName);
@@ -151,3 +171,4 @@ export async function sendQuoteRequestEmails(quote: QuoteRequestEmail) {
     });
   }
 }
+
