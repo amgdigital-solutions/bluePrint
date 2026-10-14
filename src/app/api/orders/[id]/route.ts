@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { getSessionFromRequest, verifyOrderCheckoutToken } from "@/lib/auth";
+import { sendOrderStatusEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 const allowedStatuses = new Set(["pending", "processing", "printing", "ready", "delivered", "cancelled"]);
@@ -40,6 +41,8 @@ export async function PATCH(request: Request, context: { params: { id: string } 
   const status = typeof body.status === "string" ? body.status : "";
   if (!allowedStatuses.has(status)) return NextResponse.json({ error: "Invalid order status." }, { status: 400 });
 
+  const currentRows = await sql`SELECT status, order_number, customer_name, customer_email, delivery_type FROM orders WHERE id = ${context.params.id} LIMIT 1`;
+  if (!currentRows[0]) return NextResponse.json({ error: "Order not found." }, { status: 404 });
   const rows = await sql`
     UPDATE orders
     SET status = ${status}
@@ -47,5 +50,13 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     RETURNING *
   `;
   if (rows.length === 0) return NextResponse.json({ error: "Order not found." }, { status: 404 });
+  if (currentRows[0].status !== status && currentRows[0].customer_email) {
+    try {
+      await sendOrderStatusEmail({ orderReference: String(currentRows[0].order_number), customerName: String(currentRows[0].customer_name || "there"), customerEmail: String(currentRows[0].customer_email), status, deliveryType: currentRows[0].delivery_type });
+    } catch (emailError) {
+      console.error("Order status email failed", emailError);
+    }
+  }
   return NextResponse.json({ order: rows[0] });
 }
+
