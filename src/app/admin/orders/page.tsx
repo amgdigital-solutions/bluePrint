@@ -15,6 +15,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any; ne
 export default function AdminOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -65,7 +66,8 @@ export default function AdminOrdersPage() {
     const customer = o.profile_name || o.customer_name;
     const matchesSearch = o.order_number.toLowerCase().includes(search.toLowerCase()) || customer.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === "all" || o.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesSource = sourceFilter === "all" || o.order_source === sourceFilter;
+    return matchesSearch && matchesStatus && matchesSource;
   });
 
   return (
@@ -88,6 +90,12 @@ export default function AdminOrdersPage() {
             <option value="ready">Ready</option>
             <option value="delivered">Delivered</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+          <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)} className="px-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-blueprint-500 bg-white">
+            <option value="all">All Sources</option>
+            <option value="active_subscriber">Active subscriber</option>
+            <option value="registered_account">Registered account</option>
+            <option value="guest">Guest</option>
           </select>
         </div>
       </div>
@@ -124,6 +132,7 @@ export default function AdminOrdersPage() {
                     <td className="px-6 py-4">
                       <p className="text-sm font-medium text-gray-900">{customer}</p>
                       <p className="text-xs text-gray-500">{order.customer_email}</p>
+                      <span className={`inline-flex mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${order.order_source === "active_subscriber" ? "bg-green-100 text-green-700" : order.order_source === "guest" ? "bg-gray-100 text-gray-700" : "bg-blue-100 text-blue-700"}`}>{order.order_source === "active_subscriber" ? "Active subscriber" : order.order_source === "guest" ? "Guest" : "Registered account"}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
@@ -162,3 +171,4 @@ export default function AdminOrdersPage() {
     </div>
   );
 }
+
