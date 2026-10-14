@@ -42,6 +42,17 @@ export async function POST(request: Request) {
     const locationId = process.env.SQUARE_LOCATION_ID;
     const applicationId = process.env.SQUARE_APPLICATION_ID;
     if (!profile || !variationId || !token || !locationId || !applicationId) return NextResponse.json({ error: "Square membership setup is incomplete." }, { status: 503 });
+    const existingSubscription = await sql`
+      SELECT id, status, tier, current_period_end
+      FROM subscriptions
+      WHERE user_id = ${profile.id}
+        AND status IN ('active', 'pending', 'past_due', 'paused')
+      ORDER BY updated_at DESC
+      LIMIT 1
+    `;
+    if (existingSubscription[0]) {
+      return NextResponse.json({ error: "You already have a membership subscription. Please contact us if you need to update or restart it." }, { status: 409 });
+    }
     if (!sourceId) return NextResponse.json({ error: "Secure card details are required to start membership." }, { status: 400 });
     if (!profile.address || String(profile.address).trim().length < 5) return NextResponse.json({ error: "A verified delivery address within 10 miles is required before joining." }, { status: 400 });
     const addressQuery = new URLSearchParams({ q: String(profile.address), format: "jsonv2", limit: "1", countrycodes: "us" });
@@ -67,11 +78,14 @@ export async function POST(request: Request) {
     if (!subscriptionResponse.ok || !subscriptionResult.subscription?.id) return NextResponse.json({ error: subscriptionResult.errors?.[0]?.detail || "Square could not create the subscription." }, { status: 502 });
 
     const subscription = subscriptionResult.subscription;
-    await sql`INSERT INTO subscriptions (user_id, square_subscription_id, status, tier, current_period_start, current_period_end) VALUES (${profile.id}, ${subscription.id}, 'active', ${plan.tier}, ${subscription.start_date || null}, ${subscription.charged_through_date || null}) ON CONFLICT (square_subscription_id) DO UPDATE SET status = 'active', tier = ${plan.tier}, updated_at = now()`;
-    await sql`UPDATE profiles SET is_member = true, membership_tier = ${plan.tier}, membership_expires_at = ${subscription.charged_through_date || null} WHERE id = ${profile.id}`;
+    const squareStatus = String(subscription.status || "PENDING").toLowerCase();
+    const localStatus = squareStatus === "active" ? "active" : squareStatus === "paused" ? "paused" : squareStatus === "canceled" || squareStatus === "deactivated" ? "cancelled" : "pending";
+    await sql`INSERT INTO subscriptions (user_id, square_subscription_id, status, tier, current_period_start, current_period_end) VALUES (${profile.id}, ${subscription.id}, ${localStatus}, ${plan.tier}, ${subscription.start_date || null}, ${subscription.charged_through_date || null}) ON CONFLICT (square_subscription_id) DO UPDATE SET status = ${localStatus}, tier = ${plan.tier}, updated_at = now()`;
+    await sql`UPDATE profiles SET is_member = ${localStatus === "active"}, membership_tier = ${plan.tier}, membership_expires_at = ${subscription.charged_through_date || null} WHERE id = ${profile.id}`;
     return NextResponse.json({ subscription: { id: subscription.id, tier: plan.tier, status: subscription.status }, message: "Membership started. Your card was saved securely, and the first charge will occur after the complimentary month." }, { status: 201 });
   } catch (error) {
     console.error("Membership subscription failed", error);
     return NextResponse.json({ error: "Unable to start membership right now." }, { status: 500 });
   }
 }
+
