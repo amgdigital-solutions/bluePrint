@@ -23,7 +23,16 @@ export async function GET(request: Request) {
 
   const rows = allOrders
     ? await sql`
-        SELECT o.*, p.full_name AS profile_name,
+        SELECT o.*, p.full_name AS profile_name, p.email AS profile_email,
+          CASE
+            WHEN o.user_id IS NULL THEN 'guest'
+            WHEN EXISTS (
+              SELECT 1 FROM subscriptions s
+              WHERE s.user_id = o.user_id AND s.status = 'active'
+                AND (s.current_period_end IS NULL OR s.current_period_end > now())
+            ) THEN 'active_subscriber'
+            ELSE 'registered_account'
+          END AS order_source,
           COALESCE((SELECT json_agg(of ORDER BY of.created_at) FROM order_files of WHERE of.order_id = o.id), '[]'::json) AS files
         FROM orders o
         LEFT JOIN profiles p ON p.id = o.user_id
