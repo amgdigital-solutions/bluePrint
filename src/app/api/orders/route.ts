@@ -92,8 +92,19 @@ export async function POST(request: Request) {
 
     let isMember = false;
     if (session) {
-      const members = await sql`SELECT is_member, full_name, email, phone FROM profiles WHERE id = ${session.userId} LIMIT 1`;
-      isMember = members[0]?.is_member === true;
+      const members = await sql`
+        SELECT p.is_member, p.full_name, p.email, p.phone,
+          EXISTS (
+            SELECT 1 FROM subscriptions s
+            WHERE s.user_id = p.id
+              AND s.status = 'active'
+              AND (s.current_period_end IS NULL OR s.current_period_end > now())
+          ) AS has_active_subscription
+        FROM profiles p
+        WHERE p.id = ${session.userId}
+        LIMIT 1
+      `;
+      isMember = members[0]?.is_member === true && members[0]?.has_active_subscription === true;
       if (isMember) {
         customerName = String(members[0].full_name || customerName).trim();
         customerEmail = String(members[0].email || customerEmail).trim().toLowerCase();
@@ -160,3 +171,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unable to submit your order right now." }, { status: 500 });
   }
 }
+
